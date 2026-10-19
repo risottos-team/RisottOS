@@ -7,6 +7,7 @@
 #include "drivers/timer.h"
 #include "drivers/ata.h"
 #include "mem/mem.h"
+#include "rfs/rfs.h"
 
 // Introduce our hardware setup and jump functions to the kernel
 extern void c_tss_init(void);
@@ -31,7 +32,7 @@ static void chc_handler(void) {
 static void format_check(void){
     unsigned char win  = VGA_COLOR(VGA_WHITE, VGA_BLUE);
     unsigned char edge = VGA_COLOR(VGA_YELLOW, VGA_BLUE);
-    unsigned char hi   = VGA_COLOR(VGA_LIGHT_CYAN, VGA_BLUE);
+    
 
     vga_save_screen();
     vga_hide_cursor();
