@@ -12,6 +12,39 @@
 extern void c_tss_init(void);
 extern void enter_usermode(void);
 extern void tss_init(void);
+//handles the user input
+static void chc_handler(void) {
+    while (1) {
+        char choice = get_key();
+
+        if (choice == 'f' || choice == 'F') {
+            rfs_format();
+        }
+        else if (choice != 'n' && choice != 'N') {
+            continue;
+        }
+
+        return;
+    }
+}
+// checks if the drive is formatted
+static void format_check(void){
+    unsigned char win  = VGA_COLOR(VGA_WHITE, VGA_BLUE);
+    unsigned char edge = VGA_COLOR(VGA_YELLOW, VGA_BLUE);
+    unsigned char hi   = VGA_COLOR(VGA_LIGHT_CYAN, VGA_BLUE);
+
+    vga_save_screen();
+    vga_hide_cursor();
+
+    vga_draw_window(0, 0, 80, 25, " RisottOS FileSystem Setup ", edge, win);
+    vga_puts_at(1, 2, "Your Drive has not been formatted yet, Do you wish to format it?", win);
+    vga_puts_at(3, 23, "F-Format", edge);
+    vga_puts_at(16, 23, "N-No", edge);
+    chc_handler();
+
+    vga_restore_screen();
+    vga_show_cursor();
+}
 
 // A simple temporary user space application function to test Ring 3 execution
 // It will be loaded at 0x500000 as configured in our assembly iretd stack layout
@@ -73,7 +106,7 @@ void kmain() {
     // Boot message
     print_string("RisottOS booted successfully!\n", 0x0F);
     sleep_ticks(100);
-
+    format_check();
     print_string("Preparing to launch RisottOS User Space...\n", 0x0F);
     sleep_ticks(50);
 
