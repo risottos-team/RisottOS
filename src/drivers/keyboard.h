@@ -7,5 +7,5 @@
 char get_key(void);
 char keyboard_read(void);
 void keyboard_irq_handler(void);
-
+void keyboard_clear_buffer(void);
 #endif

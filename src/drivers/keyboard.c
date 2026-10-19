@@ -19,6 +19,10 @@ static const char scancode_to_ascii[] = {
 };
 
 // Poll keyboard directly for a single key press.
+void keyboard_clear_buffer(void) {
+    // Discard all queued characters.
+    buffer_tail = buffer_head;
+}
 char get_key(void) {
     while (1) {
         // Wait until keyboard buffer has data available on port 0x64.
