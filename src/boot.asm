@@ -101,25 +101,50 @@ disk_error:
 ; and we rely on paging later instead.
 ; ============================================
 gdt_start:
-    dq 0                      ; null descriptor - required by the CPU, unused
+    dq 0                      ; 0x00: Null descriptor - required by CPU
 
-gdt_code:                     ; code segment descriptor
-    dw 0xFFFF                  ; limit (bits 0-15) - segment size
-    dw 0x0000                   ; base (bits 0-15) - segment starts at 0
-    db 0x00                      ; base (bits 16-23)
-    db 10011010b                  ; access byte: present, ring 0, code, readable
-    db 11001111b                   ; flags (4KB granularity, 32-bit) + limit (16-19)
-    db 0x00                          ; base (bits 24-31)
+gdt_code:                     ; 0x08: Kernel Code Segment (Ring 0)
+    dw 0xFFFF
+    dw 0x0000
+    db 0x00
+    db 10011010b              ; Present, Ring 0, Code, Readable
+    db 11001111b
+    db 0x00
 
-gdt_data:                     ; data segment descriptor
-    dw 0xFFFF                  ; limit (bits 0-15)
-    dw 0x0000                   ; base (bits 0-15)
-    db 0x00                      ; base (bits 16-23)
-    db 10010010b                  ; access byte: present, ring 0, data, writable
-    db 11001111b                   ; flags (4KB granularity, 32-bit) + limit (16-19)
-    db 0x00                          ; base (bits 24-31)
+gdt_data:                     ; 0x10: Kernel Data Segment (Ring 0)
+    dw 0xFFFF
+    dw 0x0000
+    db 0x00
+    db 10010010b              ; Present, Ring 0, Data, Writable
+    db 11001111b
+    db 0x00
+
+gdt_user_code:                ; 0x18: User Code Segment (Ring 3) - NEW!
+    dw 0xFFFF
+    dw 0x0000
+    db 0x00
+    db 11111010b              ; Present, RING 3, Code, Readable
+    db 11001111b
+    db 0x00
+
+gdt_user_data:                ; 0x20: User Data Segment (Ring 3) - NEW!
+    dw 0xFFFF
+    dw 0x0000
+    db 0x00
+    db 11110010b              ; Present, RING 3, Data, Writable
+    db 11001111b
+    db 0x00
+
+gdt_tss:                      ; 0x28: Task State Segment Descriptor
+    dw 103                    ; Size of TSS minus 1 (104 bytes total)
+    dw 0x0000                 ; Base address (bits 0-15) - Will be set in C code dynamically
+    db 0x00                   ; Base address (bits 16-23)
+    db 10001001b              ; Present, Ring 0, Executable, Type: 32-bit TSS (Available)
+    db 0x00                   ; Flags
+    db 0x00                   ; Base address (bits 24-31)
 
 gdt_end:
+
 
 ; This structure tells the CPU where the GDT is and how big it is.
 ; The lgdt instruction (next step) will load this into the CPU.

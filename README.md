@@ -2,13 +2,14 @@
 
 RisottOS is a small educational bare-metal operating system for 32-bit x86 PCs. It boots through a BIOS bootloader, switches to 32-bit protected mode, loads a freestanding C kernel, and provides VGA text output, interrupt-driven input, timer support, RTC access, and a basic interactive shell.
 
-> **Current scope:** RisottOS targets BIOS-based i386-compatible systems and runs in QEMU. It is not an x86-64 operating system and does not currently use paging, user mode, or a filesystem.
+> **Current scope:** RisottOS targets BIOS-based i386-compatible systems and runs in QEMU. It is not an x86-64 operating system and does not currently use paging or process isolation. The kernel includes a minimal Ring 3 transition and syscall smoke test.
 
 ## Features
 
 - 16-bit BIOS bootloader
 - BIOS Extended Disk Drive Services (LBA / `INT 13h`, function `42h`)
 - 32-bit protected mode with a flat Global Descriptor Table (GDT)
+- Minimal Ring 3 user-mode transition and `int 0x80` syscall smoke test
 - Interrupt Descriptor Table (IDT)
 - Programmable Interrupt Controller (PIC) remapping
 - Freestanding C kernel
@@ -170,7 +171,7 @@ The shell protects the bootloader and kernel area by refusing `ata write` operat
 
 - The system currently boots through legacy BIOS; UEFI boot is not supported.
 - The kernel runs in 32-bit protected mode and uses a flat memory model.
-- There is no paging, process isolation, userspace, filesystem, or standard C library.
+- There is no paging, process isolation, filesystem, or standard C library. The current userspace support is limited to the Ring 3 smoke test in `kernel.c`.
 - The bootloader currently reads a fixed number of sectors from the boot disk. Keep the kernel image within the configured disk-read limit.
 - ATA commands access the emulated primary IDE disk in QEMU and are intended for experimentation.
 - There is no automated test suite. Manual smoke testing in QEMU is currently the primary validation method.
