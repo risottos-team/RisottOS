@@ -20,33 +20,37 @@ static void chc_handler(void) {
 
         if (choice == 'f' || choice == 'F') {
             rfs_format();
+            keyboard_clear_buffer();
         }
         else if (choice != 'n' && choice != 'N') {
+            keyboard_clear_buffer();
             continue;
         }
 
         return;
     }
 }
+
 // checks if the drive is formatted
 static void format_check(void){
-    unsigned char win  = VGA_COLOR(VGA_WHITE, VGA_BLUE);
-    unsigned char edge = VGA_COLOR(VGA_YELLOW, VGA_BLUE);
+    if(rfs_info() == -1){
+        unsigned char win  = VGA_COLOR(VGA_WHITE, VGA_BLUE);
+        unsigned char edge = VGA_COLOR(VGA_YELLOW, VGA_BLUE);
     
 
-    vga_save_screen();
-    vga_hide_cursor();
+        vga_save_screen();
+        vga_hide_cursor();
 
-    vga_draw_window(0, 0, 80, 25, " RisottOS FileSystem Setup ", edge, win);
-    vga_puts_at(1, 2, "Your Drive has not been formatted yet, Do you wish to format it?", win);
-    vga_puts_at(3, 23, "F-Format", edge);
-    vga_puts_at(16, 23, "N-No", edge);
-    chc_handler();
+        vga_draw_window(0, 0, 80, 25, " RisottOS FileSystem Setup ", edge, win);
+        vga_puts_at(1, 2, "Your Drive has not been formatted yet, Do you wish to format it?", win);
+        vga_puts_at(3, 23, "F-Format", edge);
+        vga_puts_at(16, 23, "N-No", edge);
+        chc_handler();
 
-    vga_restore_screen();
-    vga_show_cursor();
+        vga_restore_screen();
+        vga_show_cursor();
+    }
 }
-
 // A simple temporary user space application function to test Ring 3 execution
 // It will be loaded at 0x500000 as configured in our assembly iretd stack layout
 void create_test_user_app(void) {
@@ -86,6 +90,34 @@ void create_test_user_app(void) {
     user_ram[12] = 0xEB; // JMP short
     user_ram[13] = 0xFE; // Jump back to itself
 }
+static void sh_up_select(void){
+    vga_save_screen();
+    vga_hide_cursor();
+    unsigned char win  = VGA_COLOR(VGA_WHITE, VGA_BLUE);
+    unsigned char edge = VGA_COLOR(VGA_YELLOW, VGA_BLUE);
+    vga_draw_window(0, 0, 80, 25, " Information ", edge, win);
+    vga_puts_at(1, 2, "The UserSpace is in development, do you want to launch shell or continue?", win);
+    vga_puts_at(3, 23, "Enter-Continue", edge);
+    vga_puts_at(20, 23, "L-Launch", edge);
+    while(1){
+        char choice = get_key();
+        if(choice == '\n'){
+            keyboard_clear_buffer();
+            vga_restore_screen();
+            vga_show_cursor();
+            create_test_user_app();
+            enter_usermode();
+
+            return;
+        } else if(choice == 'l'){
+            keyboard_clear_buffer();
+            vga_restore_screen();
+            vga_show_cursor();
+            start_shell(); 
+        }
+    }
+    
+}
 
 // Kernel Entry Point
 void kmain() {
@@ -108,14 +140,15 @@ void kmain() {
     print_string("RisottOS booted successfully!\n", 0x0F);
     sleep_ticks(100);
     format_check();
-    print_string("Preparing to launch RisottOS User Space...\n", 0x0F);
     sleep_ticks(50);
 
+    sh_up_select();
+
     // Build our crude machine code program at the target user memory zone
-    create_test_user_app();
+    
 
     // Fling the CPU out of Kernel Space into Ring 3!
-    enter_usermode();
+    
 
     // The CPU will NEVER reach this line because it is now running down at Ring 3
     // The old start_shell() function is commented out for now since Ring 3 takes over
