@@ -20,7 +20,9 @@ void pic_remap (void) {
     outb(0xA1, 0x01);
 
     // Configure interrupt masks: Unmask timer (IRQ0) and keyboard (IRQ1)
-    outb(0x21, 0xF8);
+    // Keep the timer enabled, but let the userspace input syscall poll the
+    // keyboard controller directly instead of racing IRQ1 with Ring 3 code.
+    outb(0x21, 0xFA);
     outb(0xA1, 0xBF);
 }
 

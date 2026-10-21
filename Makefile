@@ -1,4 +1,3 @@
-
 CC      := i686-elf-gcc
 LD      := i686-elf-ld
 AS      := nasm
@@ -64,10 +63,18 @@ $(BUILD)/kernel.bin: $(ASM_OBJ) $(C_OBJ)
 	    $(BUILD)/kernel_entry.asm.o \
 	    $(filter-out $(BUILD)/kernel_entry.asm.o,$^)
 
-# Create disk image
-$(OS_IMG): $(BUILD)/boot.bin $(BUILD)/kernel.bin
-	cat $^ > $@
+# Rule to compile independent User Mode init binary at 0x500000 target
+$(BUILD)/init.bin: init.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c init.c -o $(BUILD)/init.o
+	$(LD) -m elf_i386 -T config/init.ld $(BUILD)/init.o -o $@
+
+# Create disk image and place the init seed outside the RFS area.
+$(OS_IMG): $(BUILD)/boot.bin $(BUILD)/kernel.bin $(BUILD)/init.bin
+	cat $(BUILD)/boot.bin $(BUILD)/kernel.bin > $@
 	truncate -s 64M $@
+	dd if=$(BUILD)/init.bin of=$@ bs=512 seek=200 conv=notrunc
+
 
 # Run with QEMU
 run: all

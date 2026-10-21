@@ -1,6 +1,5 @@
 #include "keyboard.h"
 #include "../arch/io.h"
-#include "../arch/pic.h"
 
 #define KEYBOARD_BUFFER_SIZE 128
 
@@ -8,6 +7,7 @@
 static volatile char keyboard_buffer[KEYBOARD_BUFFER_SIZE];
 static volatile unsigned char buffer_head = 0;
 static volatile unsigned char buffer_tail = 0;
+static volatile char pending_key = 0;
 
 // Set 1 keyboard scancodes mapped to ASCII characters.
 static const char scancode_to_ascii[] = {
@@ -22,6 +22,7 @@ static const char scancode_to_ascii[] = {
 void keyboard_clear_buffer(void) {
     // Discard all queued characters.
     buffer_tail = buffer_head;
+    pending_key = 0;
 }
 char get_key(void) {
     while (1) {
@@ -54,6 +55,9 @@ void keyboard_irq_handler(void) {
     // Process only key press scancodes within valid range.
     if (!(scancode & 0x80) && scancode < sizeof(scancode_to_ascii)) {
         char character = scancode_to_ascii[scancode];
+        if (character) {
+            pending_key = character;
+        }
         unsigned char next_head = (buffer_head + 1) % KEYBOARD_BUFFER_SIZE;
 
         // Store character in circular buffer if space permits.
@@ -63,13 +67,17 @@ void keyboard_irq_handler(void) {
         }
     }
 
-    // Send End-of-Interrupt signal to PIC for IRQ1.
-    pic_send_eoi(1);
 }
 
 // Retrieve the next character from the keyboard input buffer.
 char keyboard_read(void) {
     char character;
+
+    if (pending_key != 0) {
+        character = pending_key;
+        pending_key = 0;
+        return character;
+    }
 
     // Return 0 if the buffer is empty.
     if (buffer_head == buffer_tail) {

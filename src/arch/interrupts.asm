@@ -52,9 +52,13 @@ _syscall_interrupt_handler:
     mov ds, ax
     mov es, ax
 
-    push esp            ; Pass registers pointer to C
+    lea eax, [esp + 8]  ; Pass the PUSHA frame, not the segment saves
+    push eax
     call syscall_dispatcher
     add esp, 4
+
+    ; Return the C dispatcher result through the saved PUSHA EAX slot.
+    mov [esp + 36], eax
 
     pop es
     pop ds
@@ -65,10 +69,10 @@ _syscall_interrupt_handler:
 tss_init:
 _tss_init:
     mov ax, 0x28        ; 0x28 is the exact GDT index for our TSS Descriptor
-    ltr ax              ; FIRE THE HARDWARE TR REGISTER PIN!
+    ltr ax              ; Load the task register.
     ret
 
-; The legendary jump function that flings the CPU down to Ring 3 (EKSİK OLAN KISIM BUYDU)
+; Enter the Ring 3 user application.
 enter_usermode:
 _enter_usermode:
     cli                 ; Clear interrupts during switch
@@ -81,7 +85,7 @@ _enter_usermode:
 
     ; Manually push the execution context that IRETD expects
     push 0x23           ; SS (User Data)
-    push 0x8FFFF        ; ESP (User Stack top)
+    push 0x800000       ; ESP (User Stack top, separate from kernel stack)
     pushfd              ; EFLAGS
 
     pop eax
@@ -91,4 +95,4 @@ _enter_usermode:
     push 0x1B           ; CS (User Code 0x18 | 3 = 0x1B)
     push 0x500000       ; EIP (Target application entry point)
 
-    iretd               ; FLING CPU TO RING 3 officially!
+    iretd               ; Switch to Ring 3.

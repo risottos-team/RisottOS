@@ -10,9 +10,11 @@ kernel in QEMU.
 - 32-bit protected mode with GDT, IDT, PIC, and TSS
 - VGA text output, PIT timer, PS/2 keyboard, RTC, and ATA PIO support
 - Basic memory manager and filesystem code
-- Ring 3 transition with an `int 0x80` syscall smoke test
+- Ring 3 transition with an interactive keyboard shell through `int 0x80`
 
-The current kernel launches the Ring 3 test application after boot. Paging,
+The current kernel launches the Ring 3 test application after boot. The user
+program polls keyboard characters through syscall 2 and echoes them
+back to the screen. Paging,
 process isolation, a standard library, and a complete userspace are not
 implemented yet.
 

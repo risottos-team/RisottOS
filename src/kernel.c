@@ -1,11 +1,11 @@
-#include "drivers/keyboard.h"
-#include "drivers/vga.h"
 #include "arch/idt.h"
-#include "arch/pic.h"
 #include "arch/io.h"
+#include "arch/pic.h"
 #include "arch/shell.h"
-#include "drivers/timer.h"
 #include "drivers/ata.h"
+#include "drivers/keyboard.h"
+#include "drivers/timer.h"
+#include "drivers/vga.h"
 #include "mem/mem.h"
 #include "rfs/rfs.h"
 
@@ -13,146 +13,142 @@
 extern void c_tss_init(void);
 extern void enter_usermode(void);
 extern void tss_init(void);
-//handles the user input
+
+// handles the user input
 static void chc_handler(void) {
-    while (1) {
-        char choice = get_key();
+  while (1) {
+    char choice = get_key();
 
-        if (choice == 'f' || choice == 'F') {
-            rfs_format();
-            keyboard_clear_buffer();
-        }
-        else if (choice != 'n' && choice != 'N') {
-            keyboard_clear_buffer();
-            continue;
-        }
-
-        return;
+    if (choice == 'f' || choice == 'F') {
+      rfs_format();
+    } else if (choice != 'n' && choice != 'N') {
+      continue;
     }
+
+    return;
+  }
 }
 
 // checks if the drive is formatted
-static void format_check(void){
-    if(rfs_info() == -1){
-        unsigned char win  = VGA_COLOR(VGA_WHITE, VGA_BLUE);
-        unsigned char edge = VGA_COLOR(VGA_YELLOW, VGA_BLUE);
-    
+static void format_check(void) {
+  unsigned char win = VGA_COLOR(VGA_WHITE, VGA_BLUE);
+  unsigned char edge = VGA_COLOR(VGA_YELLOW, VGA_BLUE);
 
-        vga_save_screen();
-        vga_hide_cursor();
+  vga_save_screen();
+  vga_hide_cursor();
 
-        vga_draw_window(0, 0, 80, 25, " RisottOS FileSystem Setup ", edge, win);
-        vga_puts_at(1, 2, "Your Drive has not been formatted yet, Do you wish to format it?", win);
-        vga_puts_at(3, 23, "F-Format", edge);
-        vga_puts_at(16, 23, "N-No", edge);
-        chc_handler();
+  vga_draw_window(0, 0, 80, 25, " RisottOS FileSystem Setup ", edge, win);
+  vga_puts_at(
+    1, 2, "Your Drive has not been formatted yet, Do you wish to format it?",
+    win);
+  vga_puts_at(3, 23, "F-Format", edge);
+  vga_puts_at(16, 23, "N-No", edge);
+  chc_handler();
 
-        vga_restore_screen();
-        vga_show_cursor();
-    }
+  vga_restore_screen();
+  vga_show_cursor();
 }
-// A simple temporary user space application function to test Ring 3 execution
-// It will be loaded at 0x500000 as configured in our assembly iretd stack layout
-void create_test_user_app(void) {
-    unsigned char *user_ram = (unsigned char *)0x500000;
 
-    // We inject raw x86 machine code instructions (opcodes) directly into user memory space:
-    // This code triggers our newly created Syscall 1 (print_string) using "int 0x80"
+void load_and_run_app(const char *filename) {
+  int file_size = rfs_size(filename);
+  if (file_size <= 0) {
+    print_string("v1.0 Exec Error: Application not found or empty!\n", 0x0C);
+    return;
+  }
 
-    // 1. We want to print a string, so we need to put the string itself somewhere in user RAM first
-    const char *test_msg = "Hello from Ring 3 User Mode via Syscall 1!\n";
-    int i = 0;
-    while (test_msg[i] != '\0') {
-        user_ram[100 + i] = test_msg[i]; // Store string content at 0x500000 + 100 bytes offset
-        i++;
-    }
-    user_ram[100 + i] = '\0';
+  unsigned char *user_space_buffer = (unsigned char *)0x500000;
 
-    // 2. Write the executable assembly opcodes into the very beginning of 0x500000:
-    user_ram[0] = 0xB8; // 0xB8 = 'mov eax, immediate dword'
-    user_ram[1] = 0x01; // Syscall Number 1 (print_string) -> EAX = 1
-    user_ram[2] = 0x00;
-    user_ram[3] = 0x00;
-    user_ram[4] = 0x00;
+  int bytes_read =
+  rfs_read(filename, user_space_buffer, (unsigned int)file_size);
+  if (bytes_read < 0) {
+    print_string("v1.0 Exec Error: Failed to read application from RFS!\n", 0x0C);
+    return;
+  }
 
-    user_ram[5] = 0xBB; // 0xBB = 'mov ebx, immediate dword'
-    // Pass the exact RAM pointer of our text string (0x500000 + 100 = 0x500064) -> EBX = 0x00500064
-    user_ram[6] = 0x64;
-    user_ram[7] = 0x00;
-    user_ram[8] = 0x50;
-    user_ram[9] = 0x00;
+  print_string("Successfully Loaded ", 0x0F);
+  print_string(filename, 0x0A);
+  print_string(" from disk into Ring 3 space. Launching...\n", 0x0F);
+  sleep_ticks(100);
 
-    user_ram[10] = 0xCD; // 0xCD 0x80 = 'int 0x80' (Trigger Software Interrupt Gate)
-    user_ram[11] = 0x80;
-
-    // HLT is privileged and would raise #GP at CPL 3. Keep the test
-    // application alive with a user-mode infinite loop instead.
-    user_ram[12] = 0xEB; // JMP short
-    user_ram[13] = 0xFE; // Jump back to itself
-}
-static void sh_up_select(void){
-    vga_save_screen();
-    vga_hide_cursor();
-    unsigned char win  = VGA_COLOR(VGA_WHITE, VGA_BLUE);
-    unsigned char edge = VGA_COLOR(VGA_YELLOW, VGA_BLUE);
-    vga_draw_window(0, 0, 80, 25, " Information ", edge, win);
-    vga_puts_at(1, 2, "The UserSpace is in development, do you want to launch shell or continue?", win);
-    vga_puts_at(3, 23, "Enter-Continue", edge);
-    vga_puts_at(20, 23, "L-Launch", edge);
-    while(1){
-        char choice = get_key();
-        if(choice == '\n'){
-            keyboard_clear_buffer();
-            vga_restore_screen();
-            vga_show_cursor();
-            create_test_user_app();
-            enter_usermode();
-
-            return;
-        } else if(choice == 'l'){
-            keyboard_clear_buffer();
-            vga_restore_screen();
-            vga_show_cursor();
-            start_shell(); 
-        }
-    }
-    
+  enter_usermode();
 }
 
 // Kernel Entry Point
 void kmain() {
-    // Initialize core hardware components
-    clear_screen();
-    idt_init();         // Set up the interrupt vector desks
-    c_tss_init();         // CRITICAL: Activate the CPU Task Register and setup Ring 0 landing pad
-    tss_init();
+  clear_screen();
+  idt_init();
+  c_tss_init();
+  tss_init();
 
-    pic_remap();
-    __asm__ volatile ("sti"); // Enable interrupts safely after IDT and TSS are bound
+  pic_remap();
+  __asm__ volatile("sti");
 
-    timer_init(100);
-    ata_init();
+  timer_init(100);
+  ata_init();
 
-    // Initialize memory allocator (4MB starting at 1MB boundary)
-    mem_init((void *)0x100000, 4 * 1024 * 1024);
+  mem_init((void *)0x100000, 4 * 1024 * 1024);
 
-    // Boot message
-    print_string("RisottOS booted successfully!\n", 0x0F);
-    sleep_ticks(100);
+  print_string("RisottOS booted successfully!\n", 0x0F);
+  sleep_ticks(100);
+
+  // Mount an existing filesystem first. Only show the setup wizard when the
+  // disk has no valid RFS filesystem yet.
+  int filesystem_ready = (rfs_init() == 0);
+  if (!filesystem_ready) {
     format_check();
+  }
+
+  keyboard_clear_buffer();
+
+  if (!filesystem_ready) {
+    filesystem_ready = (rfs_init() == 0);
+  }
+
+  if (!filesystem_ready) {
+    print_string("v1.0 Error: RFS could not be mounted after setup.\n", 0x0C);
+    while (1) {
+      halt_cpu();
+    }
+  }
+
+  // If /init.bin does not exist in the RFS file table, register it from sector 100
+  if (rfs_size("/init.bin") < 0) {
+    print_string("v1.0 Setup: Registering /init.bin in RFS file table...\n", 0x0E);
+
+    unsigned short *temp_load_zone = (unsigned short *)0x400000;
+    unsigned int init_sector;
+    int init_read_failed = 0;
+
+    // The seed image is stored outside the RFS area by the image builder.
+    // Load all three sectors so the complete flat binary is registered.
+    for (init_sector = 0; init_sector < 3; init_sector++) {
+      if (ata_read_sector(200 + init_sector,
+                          temp_load_zone + (init_sector * 256)) != 0) {
+        init_read_failed = 1;
+        break;
+      }
+    }
+
+    int rfs_status = init_read_failed
+      ? -1
+      : rfs_write("/init.bin", (const void *)0x400000, 3 * 512);
+    if (rfs_status < 0) {
+      print_string("v1.0 Error: RFS deployment index write failed!\n", 0x0C);
+      sleep_ticks(200);
+    } else {
+      print_string("v1.0 Setup: /init.bin successfully mounted and indexed!\n", 0x02);
+    }
     sleep_ticks(50);
+  }
 
-    sh_up_select();
+  print_string("Preparing to launch RisottOS Real Userspace Shell...\n", 0x0F);
+  sleep_ticks(50);
 
-    // Build our crude machine code program at the target user memory zone
-    
+  // Load and execute the system application binary from disk
+  load_and_run_app("/init.bin");
 
-    // Fling the CPU out of Kernel Space into Ring 3!
-    
-
-    // The CPU will NEVER reach this line because it is now running down at Ring 3
-    // The old start_shell() function is commented out for now since Ring 3 takes over
-    // start_shell();
-
-    while(1) { halt_cpu(); }
+  // Infinite safe halt catch in case entry fails
+  while (1) {
+    halt_cpu();
+  }
 }
