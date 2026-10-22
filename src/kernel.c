@@ -9,6 +9,10 @@
 #include "mem/mem.h"
 #include "rfs/rfs.h"
 
+// Size of the init.bin seed on disk (LBA 200..). 16 sectors = 8 KB.
+// Must be >= the size of build/init.bin, or its tail (strings!) is cut off.
+#define INIT_SECTORS 20
+
 // Introduce our hardware setup and jump functions to the kernel
 extern void c_tss_init(void);
 extern void enter_usermode(void);
@@ -120,8 +124,8 @@ void kmain() {
     int init_read_failed = 0;
 
     // The seed image is stored outside the RFS area by the image builder.
-    // Load all three sectors so the complete flat binary is registered.
-    for (init_sector = 0; init_sector < 3; init_sector++) {
+    // Load INIT_SECTORS sectors so the complete flat binary is registered.
+    for (init_sector = 0; init_sector < INIT_SECTORS; init_sector++) {
       if (ata_read_sector(200 + init_sector,
                           temp_load_zone + (init_sector * 256)) != 0) {
         init_read_failed = 1;
@@ -131,7 +135,7 @@ void kmain() {
 
     int rfs_status = init_read_failed
       ? -1
-      : rfs_write("/init.bin", (const void *)0x400000, 3 * 512);
+      : rfs_write("/init.bin", (const void *)0x400000, INIT_SECTORS * 512);
     if (rfs_status < 0) {
       print_string("v1.0 Error: RFS deployment index write failed!\n", 0x0C);
       sleep_ticks(200);

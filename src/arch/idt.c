@@ -95,9 +95,13 @@ void idt_init (void) {
     idt_set_gate(0x20, (unsigned int)timer_interrupt_handler);
     idt_set_gate(0x2E, (unsigned int)ata_interrupt_handler);
 
-    // Install the 0x80 Syscall Gate (0xEE allows Ring 3 execution)
+    // Install the 0x80 Syscall Gate.
+    // 0xEF = present, DPL 3, 32-bit TRAP gate. A trap gate leaves IF set, so
+    // IRQs (notably IRQ14 from the ATA driver, which RFS depends on) keep
+    // being delivered while a syscall runs. 0xEE (interrupt gate) cleared IF
+    // and made every disk access inside a syscall time out.
     idt_set_gate(0x80, (unsigned int)syscall_interrupt_handler);
-    idt[0x80].type_attributes = 0xEE;
+    idt[0x80].type_attributes = 0xEF;
 
     // Load IDT into CPU
     idtr.limit = sizeof(idt) - 1;
