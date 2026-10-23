@@ -8,12 +8,12 @@ kernel in QEMU.
 
 - BIOS bootloader with INT 13h disk loading
 - 32-bit protected mode with GDT, IDT, PIC, and TSS
-- VGA text output, PIT timer, PS/2 keyboard, RTC, and ATA PIO support
+- VGA text output, PIT timer, PS/2 keyboard with Shift/Caps Lock, RTC, and ATA PIO support
 - Basic memory manager, identity-mapped paging, and page-fault reporting
 - Ring 3 transition with an interactive keyboard shell through `int 0x80`
 
-The current kernel launches the Ring 3 test application after boot. The user
-program polls keyboard characters through syscall 2 and echoes them
+The current kernel launches the Ring 3 shell after boot. The user program
+reads keyboard characters through syscall 2 and echoes them
 back to the screen. Paging currently provides a 16 MiB identity-mapped bootstrap address space.
 The first 4 MiB is supervisor-only, while the Ring 3 image, stack, and
 dedicated user heap occupy user-accessible mappings. Process isolation, a

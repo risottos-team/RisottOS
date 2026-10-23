@@ -6,6 +6,8 @@
 #define PAGE_USER 0x004
 #define PAGE_SIZE 0x1000
 #define IDENTITY_MAP_BYTES (16 * 1024 * 1024)
+#define USER_START 0x00400000
+#define USER_END 0x01000000
 
 static unsigned int page_directory[1024] __attribute__((aligned(PAGE_SIZE)));
 static unsigned int page_tables[4][1024] __attribute__((aligned(PAGE_SIZE)));
@@ -59,6 +61,28 @@ void paging_init(void) {
         :
         : "r"(page_directory)
         : "eax", "memory");
+}
+
+int user_range_valid(const void *address, unsigned int size) {
+    unsigned int start = (unsigned int)address;
+    unsigned int end;
+
+    if (size == 0) return start >= USER_START && start < USER_END;
+    if (start < USER_START || start >= USER_END) return 0;
+    end = start + size;
+    if (end < start || end > USER_END) return 0;
+    return 1;
+}
+
+int user_string_valid(const char *string, unsigned int max_length) {
+    unsigned int i;
+
+    if (!user_range_valid(string, 1)) return 0;
+    for (i = 0; i < max_length; i++) {
+        if (!user_range_valid(string + i, 1)) return 0;
+        if (string[i] == '\0') return 1;
+    }
+    return 0;
 }
 
 void page_fault_handler(void) {

@@ -73,7 +73,7 @@ library once the kernel starts.</p>
 <tr><td>Boot</td><td>BIOS boot sector, A20 enable attempt, EDD disk read, protected-mode entry.</td></tr>
 <tr><td>Kernel</td><td>Freestanding 32-bit C kernel with assembly entry and interrupt stubs.</td></tr>
 <tr><td>Protection</td><td>Flat GDT, IDT, TSS, Ring 3 transition, and a small syscall dispatcher.</td></tr>
-<tr><td>Devices</td><td>VGA text/Mode 13h graphics, PIT, PS/2 keyboard, CMOS RTC, and ATA PIO.</td></tr>
+<tr><td>Devices</td><td>VGA text/Mode 13h graphics, PIT, PS/2 keyboard with Shift/Caps Lock, CMOS RTC, and ATA PIO.</td></tr>
 <tr><td>Storage</td><td>Experimental RFS filesystem and raw ATA sector operations.</td></tr>
 <tr><td>Current limitations</td><td>Paging currently provides a 16 MiB identity-mapped bootstrap space with a supervisor-only first 4 MiB. Process isolation, robust exception handling, and complete userspace are still pending.</td></tr>
 </table>
@@ -188,7 +188,7 @@ to a scheduler or shell; it remains in its loop while timer interrupts continue 
 <tr><th>Subsystem</th><th>Implementation summary</th><th>Current boundary</th></tr>
 <tr><td>VGA text</td><td>80×25 output, cursor, scrolling, colors, screen utilities.</td><td>Direct memory and port I/O.</td></tr>
 <tr><td>VGA graphics</td><td>Mode 13h at 320×200 with 256-color palette, pixels, lines, shapes, and text.</td><td>Library code; not entered by the active boot path.</td></tr>
-<tr><td>Keyboard</td><td>Set-1 scancode map, IRQ-driven 128-byte circular buffer, polling helper.</td><td>No shift, Caps Lock, extended keys, or modifier state.</td></tr>
+<tr><td>Keyboard</td><td>Set-1 scancode map, IRQ-driven 128-byte circular buffer, polling helper, Shift, and Caps Lock.</td><td>Extended navigation keys and alternate layouts are not yet exposed to userspace.</td></tr>
 <tr><td>PIT</td><td>Configurable channel 0 frequency and tick-based sleep.</td><td>Uses busy waiting with <code>hlt</code>.</td></tr>
 <tr><td>RTC</td><td>Reads CMOS BCD hours, minutes, and seconds.</td><td>No time-setting or robust update-in-progress handling.</td></tr>
 <tr><td>ATA PIO</td><td>Primary-master sector read/write, IRQ completion, flush, and IDENTIFY capacity.</td><td>Assumes a standard ATA-compatible primary IDE device.</td></tr>

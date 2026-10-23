@@ -5,6 +5,7 @@
 #include "../drivers/ata.h"
 #include "../mem/mem.h"
 #include "../rfs/rfs.h"
+#include "../mem/paging.h"
 #include "demos.h"
 
 // Pseudo error codes the Ring 3 shell can pass to syscall 27 for errors that
@@ -60,32 +61,32 @@ unsigned int syscall_dispatcher(SyscallRegisters *regs) {
     unsigned int ret = 0;
 
     switch (regs->eax) {
-        case 1:  print_string((const char *)regs->ebx, 0x0F); break;
+        case 1:
+            if (user_string_valid((const char *)regs->ebx, 4096))
+                print_string((const char *)regs->ebx, 0x0F);
+            else ret = (unsigned int)-1;
+            break;
         case 2:  ret = (unsigned int)(unsigned char)get_key(); break;
         case 3:  sleep_ticks(regs->ebx); break;
         case 4:  clear_screen(); break;
         case 5:  print_char((char)regs->ebx, 0x0F); break;
 
-        case 6:  ret = (unsigned int)rfs_list((const char *)regs->ebx); break;
-        case 7:  ret = (unsigned int)rfs_mkdir((const char *)regs->ebx); break;
+        case 6:  if (user_string_valid((const char *)regs->ebx, 128)) ret = (unsigned int)rfs_list((const char *)regs->ebx); else ret = (unsigned int)-1; break;
+        case 7:  if (user_string_valid((const char *)regs->ebx, 128)) ret = (unsigned int)rfs_mkdir((const char *)regs->ebx); else ret = (unsigned int)-1; break;
         case 9:  ret = (unsigned int)rfs_free_sectors(); break;
-        case 10: ret = (unsigned int)rfs_deldir((const char *)regs->ebx); break;
-        case 11: ret = (unsigned int)rfs_create((const char *)regs->ebx); break;
-        case 12: ret = (unsigned int)rfs_delete((const char *)regs->ebx); break;
-        case 13: ret = (unsigned int)rfs_write((const char *)regs->ebx,
-                                               (const void *)regs->ecx,
-                                               regs->edx); break;
-        case 14: ret = (unsigned int)rfs_size((const char *)regs->ebx); break;
-        case 15: ret = (unsigned int)rfs_read((const char *)regs->ebx,
-                                              (void *)regs->ecx,
-                                              regs->edx); break;
-        case 16: ret = (unsigned int)rfs_isdir((const char *)regs->ebx); break;
+        case 10: if (user_string_valid((const char *)regs->ebx, 128)) ret = (unsigned int)rfs_deldir((const char *)regs->ebx); else ret = (unsigned int)-1; break;
+        case 11: if (user_string_valid((const char *)regs->ebx, 128)) ret = (unsigned int)rfs_create((const char *)regs->ebx); else ret = (unsigned int)-1; break;
+        case 12: if (user_string_valid((const char *)regs->ebx, 128)) ret = (unsigned int)rfs_delete((const char *)regs->ebx); else ret = (unsigned int)-1; break;
+        case 13: if (user_string_valid((const char *)regs->ebx, 128) && user_range_valid((const void *)regs->ecx, regs->edx)) ret = (unsigned int)rfs_write((const char *)regs->ebx, (const void *)regs->ecx, regs->edx); else ret = (unsigned int)-1; break;
+        case 14: if (user_string_valid((const char *)regs->ebx, 128)) ret = (unsigned int)rfs_size((const char *)regs->ebx); else ret = (unsigned int)-1; break;
+        case 15: if (user_string_valid((const char *)regs->ebx, 128) && user_range_valid((void *)regs->ecx, regs->edx)) ret = (unsigned int)rfs_read((const char *)regs->ebx, (void *)regs->ecx, regs->edx); else ret = (unsigned int)-1; break;
+        case 16: if (user_string_valid((const char *)regs->ebx, 128)) ret = (unsigned int)rfs_isdir((const char *)regs->ebx); else ret = (unsigned int)-1; break;
         case 17: ret = (unsigned int)rfs_info(); break;
         case 18: ret = (unsigned int)rfs_init(); break;
         case 19: ret = (unsigned int)rfs_format(); break;
 
-        case 20: ret = (unsigned int)ata_read_sector(regs->ebx, (unsigned short *)regs->ecx); break;
-        case 21: ret = (unsigned int)ata_write_sector(regs->ebx, (unsigned short *)regs->ecx); break;
+        case 20: if (user_range_valid((void *)regs->ecx, 512)) ret = (unsigned int)ata_read_sector(regs->ebx, (unsigned short *)regs->ecx); else ret = (unsigned int)-1; break;
+        case 21: if (user_range_valid((void *)regs->ecx, 512)) ret = (unsigned int)ata_write_sector(regs->ebx, (unsigned short *)regs->ecx); else ret = (unsigned int)-1; break;
         case 22: ret = (unsigned int)ata_disc_space(); break;
 
         case 23:
