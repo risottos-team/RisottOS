@@ -91,7 +91,7 @@ library once the kernel starts.</p>
 <tr><td>Kernel orchestration</td><td><code>src/kernel.c</code></td></tr>
 <tr><td>Drivers</td><td><code>src/drivers/</code><br>VGA, graphics, keyboard, timer, RTC, ATA</td></tr>
 <tr><td>Core services</td><td><code>src/mem/</code>, <code>src/rfs/</code>, <code>src/arch/syscall.c</code></td></tr>
-<tr><td>Interactive shell</td><td><code>src/arch/shell.c</code><br>Implemented, but not called by the current <code>kmain()</code>.</td></tr>
+<tr><td>Interactive shell</td><td><code>init.c</code><br>Runs as the Ring 3 userspace application loaded by <code>kmain()</code>.</td></tr>
 </table>
 
 <h2>3. Boot and kernel startup</h2>
@@ -207,11 +207,11 @@ contiguous allocation, and is not mounted by the current <code>kmain()</code> pa
 
 <h2>9. Shell and build system</h2>
 <h3>Shell</h3>
-<p><code>src/arch/shell.c</code> contains commands for screen clearing, echo, RTC access,
+<p><code>init.c</code> contains commands for screen clearing, echo, RTC access,
 sleep, ATA tests and raw sector access, graphics demos, memory operations, and RFS
 operations. It also protects low disk sectors from raw writes. The shell is currently
 unreachable because <code>kmain()</code> launches the Ring 3 smoke test instead of
-calling <code>start_shell()</code>.</p>
+launching <code>/init.bin</code> through the Ring 3 syscall interface.</p>
 <h3>Build</h3>
 <pre>make          # assemble, compile, link, and create os.img
 make run      # boot os.img in qemu-system-i386
@@ -262,7 +262,7 @@ so the Makefile is the authoritative build path.</p>
 <tr><td><code>src/arch/idt.c</code></td><td>IDT setup, GDT rebuild, TSS structure and descriptor.</td></tr>
 <tr><td><code>src/arch/interrupts.asm</code></td><td>IRQ wrappers, syscall wrapper, TSS load, <code>iretd</code> transition.</td></tr>
 <tr><td><code>src/arch/syscall.c</code></td><td>Syscall dispatcher for print, keyboard input, free, and allocate.</td></tr>
-<tr><td><code>src/arch/shell.c</code></td><td>Interactive shell and command implementations.</td></tr>
+<tr><td><code>init.c</code></td><td>Ring 3 interactive shell and command implementations.</td></tr>
 <tr><td><code>src/drivers/</code></td><td>VGA, graphics, keyboard, timer, RTC, and ATA drivers.</td></tr>
 <tr><td><code>src/mem/</code></td><td>Simple heap allocator.</td></tr>
 <tr><td><code>src/rfs/</code></td><td>RFS metadata, directories, files, and allocation.</td></tr>

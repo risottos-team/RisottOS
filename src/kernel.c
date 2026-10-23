@@ -1,7 +1,6 @@
 #include "arch/idt.h"
 #include "arch/io.h"
 #include "arch/pic.h"
-#include "arch/shell.h"
 #include "drivers/ata.h"
 #include "drivers/keyboard.h"
 #include "drivers/timer.h"
@@ -9,7 +8,7 @@
 #include "mem/mem.h"
 #include "rfs/rfs.h"
 
-// Size of the init.bin seed on disk (LBA 200..). 16 sectors = 8 KB.
+// Size of the init.bin seed area on disk (LBA 200..). 20 sectors = 10 KB.
 // Must be >= the size of build/init.bin, or its tail (strings!) is cut off.
 #define INIT_SECTORS 20
 
