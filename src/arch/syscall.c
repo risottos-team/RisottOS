@@ -97,8 +97,8 @@ unsigned int syscall_dispatcher(SyscallRegisters *regs) {
             }
             break;
 
-        case 25: ret = (unsigned int)r_malloc(regs->ebx); break;
-        case 26: r_free((void *)regs->ebx); break;
+        case 25: ret = (unsigned int)user_malloc(regs->ebx); break;
+        case 26: user_free((void *)regs->ebx); break;
         case 27: print_rfs_error((int)regs->ebx); break;
 
         case 30: ui_demo(); break;

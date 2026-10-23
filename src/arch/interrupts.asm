@@ -9,6 +9,8 @@ global ata_interrupt_handler
 global _ata_interrupt_handler
 global syscall_interrupt_handler
 global _syscall_interrupt_handler
+global page_fault_interrupt_handler
+global _page_fault_interrupt_handler
 global enter_usermode
 global _enter_usermode
 global tss_init
@@ -18,6 +20,7 @@ extern ata_handler
 extern keyboard_handler
 extern timer_handler
 extern syscall_dispatcher
+extern page_fault_handler
 
 ; Standard Interrupt Handlers
 interrupt_handler:
@@ -39,6 +42,14 @@ _ata_interrupt_handler:
     pusha
     call ata_handler
     popa
+    iretd
+
+page_fault_interrupt_handler:
+_page_fault_interrupt_handler:
+    pusha
+    call page_fault_handler
+    popa
+    add esp, 4
     iretd
 
 ; Syscall Gate Handler (int 0x80)

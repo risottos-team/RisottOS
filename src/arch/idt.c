@@ -5,6 +5,7 @@ extern void interrupt_handler(void);
 extern void timer_interrupt_handler(void);
 extern void ata_interrupt_handler(void);
 extern void syscall_interrupt_handler(void);
+extern void page_fault_interrupt_handler(void);
 
 // ---------------------------------------------------------------------------
 // IDT Structures
@@ -94,6 +95,7 @@ void idt_init (void) {
     idt_set_gate(0x21, (unsigned int)interrupt_handler);
     idt_set_gate(0x20, (unsigned int)timer_interrupt_handler);
     idt_set_gate(0x2E, (unsigned int)ata_interrupt_handler);
+    idt_set_gate(0x0E, (unsigned int)page_fault_interrupt_handler);
 
     // Install the 0x80 Syscall Gate.
     // 0xEF = present, DPL 3, 32-bit TRAP gate. A trap gate leaves IF set, so

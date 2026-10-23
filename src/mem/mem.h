@@ -12,5 +12,8 @@ typedef struct BlockHeader {
 void mem_init(void *heap_start, unsigned int heap_size);
 void *r_malloc(unsigned int size);
 void r_free(void *ptr);
+void user_mem_init(void *heap_start, unsigned int heap_size);
+void *user_malloc(unsigned int size);
+void user_free(void *ptr);
 
 #endif

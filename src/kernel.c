@@ -6,6 +6,7 @@
 #include "drivers/timer.h"
 #include "drivers/vga.h"
 #include "mem/mem.h"
+#include "mem/paging.h"
 #include "rfs/rfs.h"
 
 // Size of the init.bin seed area on disk (LBA 200..). 20 sectors = 10 KB.
@@ -80,6 +81,7 @@ void load_and_run_app(const char *filename) {
 void kmain() {
   clear_screen();
   idt_init();
+  paging_init();
   c_tss_init();
   tss_init();
 
@@ -89,7 +91,8 @@ void kmain() {
   timer_init(100);
   ata_init();
 
-  mem_init((void *)0x100000, 4 * 1024 * 1024);
+  mem_init((void *)0x100000, 3 * 1024 * 1024);
+  user_mem_init((void *)0x600000, 2 * 1024 * 1024);
 
   print_string("RisottOS booted successfully!\n", 0x0F);
   sleep_ticks(100);

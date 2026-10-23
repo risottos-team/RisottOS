@@ -75,7 +75,7 @@ library once the kernel starts.</p>
 <tr><td>Protection</td><td>Flat GDT, IDT, TSS, Ring 3 transition, and a small syscall dispatcher.</td></tr>
 <tr><td>Devices</td><td>VGA text/Mode 13h graphics, PIT, PS/2 keyboard, CMOS RTC, and ATA PIO.</td></tr>
 <tr><td>Storage</td><td>Experimental RFS filesystem and raw ATA sector operations.</td></tr>
-<tr><td>Not yet present</td><td>Paging, virtual memory, process isolation, robust exception handling, and complete userspace.</td></tr>
+<tr><td>Current limitations</td><td>Paging currently provides a 16 MiB identity-mapped bootstrap space with a supervisor-only first 4 MiB. Process isolation, robust exception handling, and complete userspace are still pending.</td></tr>
 </table>
 
 <h2>2. System architecture</h2>
@@ -106,8 +106,9 @@ library once the kernel starts.</p>
     performs a far jump, installs data segments, and sets the kernel stack to
     <code>0x90000</code>.</li>
 <li><b>Kernel entry:</b> <code>kernel_entry.asm</code> calls <code>kmain()</code>.</li>
-<li><b>Initialization:</b> the kernel configures the IDT, rebuilds the GDT and TSS, remaps
-    the PIC, enables interrupts, starts the PIT and ATA support, and initializes a 4 MiB heap.</li>
+<li><b>Initialization:</b> the kernel configures the IDT, enables the page-fault gate,
+    builds a 16 MiB identity map, rebuilds the GDT and TSS, remaps the PIC, enables
+    interrupts, starts the PIT and ATA support, and initializes a 4 MiB heap.</li>
 <li><b>User-mode test:</b> the kernel writes test instructions to <code>0x500000</code> and
     enters Ring 3 with <code>iretd</code>.</li>
 </ol>
@@ -128,13 +129,16 @@ library once the kernel starts.</p>
 <tr><td><code>0x90000</code></td><td>Ring 0 kernel stack</td><td><code>ESP0</code> used when entering the kernel from Ring 3.</td></tr>
 <tr><td><code>0xA0000</code></td><td>VGA graphics framebuffer</td><td>Used by Mode 13h graphics routines.</td></tr>
 <tr><td><code>0xB8000</code></td><td>VGA text memory</td><td>80×25 text output.</td></tr>
-<tr><td><code>0x100000–0x500000</code></td><td>Kernel heap</td><td>4 MiB first-fit allocator arena.</td></tr>
+<tr><td><code>0x100000–0x400000</code></td><td>Kernel heap</td><td>3 MiB supervisor-only first-fit allocator arena.</td></tr>
 <tr><td><code>0x500000</code></td><td>Ring 3 test application</td><td>Raw code and its test string are written here.</td></tr>
+<tr><td><code>0x600000–0x800000</code></td><td>Ring 3 user heap</td><td>2 MiB allocator arena returned by memory syscalls.</td></tr>
 </table>
-<p>There is no paging or virtual-memory layer. The flat Ring 3 descriptors cover the full
-4 GiB linear address space, so segmentation alone does not isolate user code from kernel
-memory or hardware mappings. This is a demonstration of privilege-level transition, not
-yet a secure userspace design.</p>
+<p>The first paging layer builds four page tables covering the first 16 MiB with
+identity mappings and enables the CPU paging bit. The first 4 MiB is
+supervisor-only; the Ring 3 image, stack, and dedicated user heap are in the
+user-accessible range. A page-fault gate reports the faulting address and halts
+the system. Syscall allocations now come from the user heap, while the kernel
+heap remains supervisor-only.</p>
 
 <h2>5. GDT, IDT, PIC, and TSS</h2>
 <h3>Global Descriptor Table</h3>
@@ -231,10 +235,8 @@ so the Makefile is the authoritative build path.</p>
 
 <h2>10. Known risks and next steps</h2>
 <ol>
-<li><b>Add exception handlers:</b> install diagnostic handlers for CPU faults before
-    expanding user-mode code.</li>
-<li><b>Introduce paging:</b> create separate kernel and user mappings, guard the stack,
-    and validate user pointers before syscall access.</li>
+<li><b>Complete paging isolation:</b> create separate kernel and user mappings, guard
+    the stack, and validate user pointers before syscall access.</li>
 <li><b>Replace fixed addresses:</b> derive kernel size, stack placement, heap bounds, and
     user image placement from a memory layout rather than hard-coded constants.</li>
 <li><b>Build a scheduler boundary:</b> define process state, user return policy, and a
