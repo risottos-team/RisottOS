@@ -40,6 +40,15 @@ static void rtc_print(int which)          { syscall3(23, (unsigned int)which, 0,
 
 static void *r_malloc(unsigned int n)     { return (void *)syscall3(25, n, 0, 0); }
 static void r_free(void *p)               { syscall3(26, PTR(p), 0, 0); }
+static int ata_read(unsigned int lba, void *buf) { return syscall3(20, lba, PTR(buf), 0); }
+static int ata_write(unsigned int lba, const void *buf) {
+  return syscall3(21, lba, PTR(buf), 0);
+}
+static unsigned int ata_sectors(void)     { return (unsigned int)syscall3(22, 0, 0, 0); }
+static void ui_demo(void)                 { syscall3(30, 0, 0, 0); }
+static void ui_colors(void)               { syscall3(31, 0, 0, 0); }
+static void gfx_demo(void)                { syscall3(32, 0, 0, 0); }
+static void gfx_ball(void)                { syscall3(33, 0, 0, 0); }
 
 // Pseudo error codes for errors the shell detects itself (match syscall.c).
 #define U_ERR_INVAL  1000
@@ -112,6 +121,8 @@ static void sh_help(const char *args) {
     "  echo <msg> - print text\n"
     "  rtc - show local time and other things\n"
     "  sleep - wait for the number of seconds you specified\n"
+    "  mem test - verify the Ring 3 allocator\n"
+    "  ata test|avail - test storage access or show capacity\n"
     "  rfs info - show filesystem info\n"
     "  rfs init - validate filesystem\n"
     "  rfs format - format filesystem (destructive)\n"
@@ -124,7 +135,9 @@ static void sh_help(const char *args) {
     "  write <path> <text> - write text to a file\n"
     "  cat <path> - show a file\n"
     "  rm <path> - delete a file\n"
-    "  df - show free disk space\n");
+    "  df - show free disk space\n"
+    "  ui demo|colors - show text-mode demos\n"
+    "  gfx demo|ball - show pixel graphics demos\n");
 }
 
 static void sh_echo(const char *args) {
@@ -162,6 +175,64 @@ static void sh_sleep(const char *args) {
       print_string("Done sleeping\n");
     }
   }
+}
+
+static void sh_mem(const char *args) {
+  if (!str_eq(args, "test")) {
+    print_string("Usage: mem test\n");
+    return;
+  }
+
+  char *memory = (char *)r_malloc(100);
+  if (memory == 0) {
+    print_string("Malloc failed: out of memory.\n");
+    return;
+  }
+
+  memory[0] = 'R'; memory[1] = 'i'; memory[2] = 's'; memory[3] = 'o';
+  memory[4] = 't'; memory[5] = 't'; memory[6] = 'O'; memory[7] = 'S';
+  memory[8] = '\0';
+  print_string("Memory test: ");
+  print_string(memory);
+  print_string(" (passed)\n");
+  r_free(memory);
+}
+
+static void sh_ata(const char *args) {
+  if (str_eq(args, "avail")) {
+    print_uint(ata_sectors());
+    print_string(" sectors\n");
+    return;
+  }
+
+  if (!str_eq(args, "test")) {
+    print_string("Usage: ata test|avail\n");
+    return;
+  }
+
+  unsigned short *out = (unsigned short *)r_malloc(512);
+  unsigned short *in = (unsigned short *)r_malloc(512);
+  if (out == 0 || in == 0) {
+    print_string("ATA test failed: out of memory.\n");
+    if (out) r_free(out);
+    if (in) r_free(in);
+    return;
+  }
+
+  for (unsigned int i = 0; i < 256; i++) {
+    out[i] = (unsigned short)(0xA000 + i);
+    in[i] = 0;
+  }
+
+  int ok = ata_write(2000, out) == 0 && ata_read(2000, in) == 0;
+  if (ok) {
+    for (unsigned int i = 0; i < 256; i++) {
+      if (in[i] != out[i]) { ok = 0; break; }
+    }
+  }
+  print_string(ok ? "ATA test passed.\n" : "ATA test failed.\n");
+  r_free(out);
+  r_free(in);
 }
 
 static void sh_rfs(const char *args) {
@@ -375,6 +446,18 @@ static void sh_pwd(const char *args) {
   print_char('\n');
 }
 
+static void sh_ui(const char *args) {
+  if (str_eq(args, "demo")) ui_demo();
+  else if (str_eq(args, "colors")) ui_colors();
+  else print_string("Usage: ui demo|colors\n");
+}
+
+static void sh_gfx(const char *args) {
+  if (str_eq(args, "demo")) gfx_demo();
+  else if (str_eq(args, "ball")) gfx_ball();
+  else print_string("Usage: gfx demo|ball\n");
+}
+
 
 
 // ---------------------------------------------------------------------------
@@ -387,6 +470,8 @@ static const ShellCommand cmd_table[] = {
   {"echo",  sh_echo},
   {"rtc",   sh_rtc},
   {"sleep", sh_sleep},
+  {"mem",   sh_mem},
+  {"ata",   sh_ata},
   {"rfs",   sh_rfs},
   {"ls",    sh_ls},
   {"mkdir", sh_mkdir},
@@ -397,7 +482,9 @@ static const ShellCommand cmd_table[] = {
   {"rm",    sh_rm},
   {"df",    sh_df},
   {"cd",    sh_cd},
-  {"pwd",   sh_pwd}
+  {"pwd",   sh_pwd},
+  {"ui",    sh_ui},
+  {"gfx",   sh_gfx}
 
 };
 
