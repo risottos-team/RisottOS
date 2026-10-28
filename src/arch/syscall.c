@@ -7,6 +7,7 @@
 #include "../rfs/rfs.h"
 #include "../mem/paging.h"
 #include "demos.h"
+#include "../pci/pci.h"
 
 // Pseudo error codes the Ring 3 shell can pass to syscall 27 for errors that
 // it detects itself (it does not know the RFS_E_* values).
@@ -57,6 +58,7 @@ static void print_rfs_error(int code) {
 //  25  r_malloc(size)              26  r_free(ptr)
 //  27  print_rfs_error(code)
 //  30  ui_demo  31  ui_colors  32  gfx_demo  33  gfx_ball
+//  35  pci_read32(bus ,device, function, offset)
 unsigned int syscall_dispatcher(SyscallRegisters *regs) {
     unsigned int ret = 0;
 
@@ -106,7 +108,13 @@ unsigned int syscall_dispatcher(SyscallRegisters *regs) {
         case 31: ui_colors(); break;
         case 32: gfx_demo(); break;
         case 33: gfx_ball(); break;
-
+        case 35: {
+            unsigned int bus      = (regs->ebx >> 16) & 0xFF;
+            unsigned int device   = (regs->ebx >> 8)  & 0xFF;
+            unsigned int function =  regs->ebx        & 0xFF;
+            ret = pci_read32(bus, device, function, regs->ecx);
+            break;
+        }
         default:
             print_string("Syscall: unknown number.\n", 0x0F);
             ret = (unsigned int)-1;

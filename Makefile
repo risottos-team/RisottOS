@@ -28,6 +28,7 @@ C_SRC := $(wildcard \
     src/drivers/*.c \
     src/drivers/gfx/*.c \
     src/mem/*.c \
+    src/pci/*.c \
     src/rfs/*.c \
 )
 

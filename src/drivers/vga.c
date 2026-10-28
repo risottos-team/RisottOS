@@ -21,6 +21,14 @@ static void update_cursor(int index) {
     outb(0x3D5, (unsigned char)((index >> 8) & 0xFF));
 }
 
+void print_hex(unsigned int value) {
+    const char *digits = "0123456789ABCDEF";
+    int shift;
+
+    for (shift = 28; shift >= 0; shift -= 4) {
+        print_char(digits[(value >> shift) & 0x0F], 0x0F);
+    }
+}
 // Clear the entire VGA text-mode buffer and reset the cursor position.
 void clear_screen(void) {
     // VGA text mode stores each cell as character plus attribute byte (color).

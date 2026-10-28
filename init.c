@@ -49,7 +49,11 @@ static void ui_demo(void)                 { syscall3(30, 0, 0, 0); }
 static void ui_colors(void)               { syscall3(31, 0, 0, 0); }
 static void gfx_demo(void)                { syscall3(32, 0, 0, 0); }
 static void gfx_ball(void)                { syscall3(33, 0, 0, 0); }
-
+static unsigned int pci_read32(unsigned int bus, unsigned int dev,
+                               unsigned int fn, unsigned int offset) {
+  unsigned int packed = ((bus & 0xFF) << 16) | ((dev & 0xFF) << 8) | (fn & 0xFF);
+  return (unsigned int)syscall3(35, packed, offset, 0);
+}
 // Pseudo error codes for errors the shell detects itself (match syscall.c).
 #define U_ERR_INVAL  1000
 #define U_ERR_NOTDIR 1001
@@ -86,6 +90,12 @@ static int simple_atoi(const char *str) {
     str++;
   }
   return res;
+}
+static void print_hex(unsigned int v, int digits) {
+  for (int i = digits - 1; i >= 0; i--) {
+    unsigned int n = (v >> (i * 4)) & 0xF;
+    print_char((char)(n < 10 ? '0' + n : 'A' + (n - 10)));
+  }
 }
 
 static void print_uint(unsigned int n) {
@@ -137,7 +147,8 @@ static void sh_help(const char *args) {
     "  rm <path> - delete a file\n"
     "  df - show free disk space\n"
     "  ui demo|colors - show text-mode demos\n"
-    "  gfx demo|ball - show pixel graphics demos\n");
+    "  gfx demo|ball - show pixel graphics demos\n"
+    "  pci read - reads pci address\n");
 }
 
 static void sh_echo(const char *args) {
@@ -162,7 +173,41 @@ static void sh_rtc(const char *args) {
     print_string(": Command not found.\n");
   }
 }
+static void print_pci_func(unsigned int bus, unsigned int dev, unsigned int fn) {
+  unsigned int id  = pci_read32(bus, dev, fn, 0x00);
+  unsigned int cls = pci_read32(bus, dev, fn, 0x08);
 
+  print_hex(bus, 2);  print_char(':');
+  print_hex(dev, 2);  print_char('.');
+  print_hex(fn, 1);
+  print_string("  ");
+  print_hex(id & 0xFFFF, 4);  print_char(':');
+  print_hex(id >> 16, 4);
+  print_string("  class ");
+  print_hex(cls >> 24, 2);  print_char(':');
+  print_hex((cls >> 16) & 0xFF, 2);
+  print_char('\n');
+}
+
+static void sh_pci(const char *args) {
+  (void)args;
+
+  for (unsigned int bus = 0; bus < 256; bus++) {
+    for (unsigned int dev = 0; dev < 32; dev++) {
+      if ((pci_read32(bus, dev, 0, 0x00) & 0xFFFF) == 0xFFFF) continue;
+
+      print_pci_func(bus, dev, 0);
+
+      // Header type bit 7 = multi-function device: probe functions 1..7.
+      if ((pci_read32(bus, dev, 0, 0x0C) >> 16) & 0x80) {
+        for (unsigned int fn = 1; fn < 8; fn++) {
+          if ((pci_read32(bus, dev, fn, 0x00) & 0xFFFF) != 0xFFFF)
+            print_pci_func(bus, dev, fn);
+        }
+      }
+    }
+  }
+}
 static void sh_sleep(const char *args) {
   if (str_eq(args, "help")) {
     print_string("Command:\n  sleep time(1,3,6...) - wait for the number of seconds you specified\n");
@@ -484,7 +529,8 @@ static const ShellCommand cmd_table[] = {
   {"cd",    sh_cd},
   {"pwd",   sh_pwd},
   {"ui",    sh_ui},
-  {"gfx",   sh_gfx}
+  {"gfx",   sh_gfx},
+  {"pci",   sh_pci}
 
 };
 

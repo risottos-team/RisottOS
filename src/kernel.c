@@ -8,7 +8,7 @@
 #include "mem/mem.h"
 #include "mem/paging.h"
 #include "rfs/rfs.h"
-
+#include "pci/pci.h"
 // Size of the init.bin seed area on disk (LBA 200..). 20 sectors = 10 KB.
 // Must be >= the size of build/init.bin, or its tail (strings!) is cut off.
 #define INIT_SECTORS 20
@@ -89,6 +89,7 @@ void kmain() {
   __asm__ volatile("sti");
 
   timer_init(100);
+  unsigned int mustafa = pci_read32(0, 0, 0, 0);
   ata_init();
 
   mem_init((void *)0x100000, 3 * 1024 * 1024);
@@ -142,7 +143,8 @@ void kmain() {
       print_string("v1.0 Error: RFS deployment index write failed!\n", 0x0C);
       sleep_ticks(200);
     } else {
-      print_string("v1.0 Setup: /init.bin successfully mounted and indexed!\n", 0x02);
+      print_string("vf1.0 Setup: /init.bin successfully mounted and indexed!\n", 0x02);
+      
     }
     sleep_ticks(50);
   }

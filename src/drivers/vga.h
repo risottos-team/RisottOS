@@ -25,6 +25,7 @@ void print_char(char character, unsigned char color);
 void print_string(const char *string, unsigned char color);
 void scroll_screen(void);
 int  get_cursor_index(void);
+void print_hex(unsigned int value);
 
 // ---- text-mode graphics ---------------------------------------------------
 // All coordinates are (column x 0-79, row y 0-24). Everything is clipped to the

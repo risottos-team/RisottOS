@@ -18,14 +18,6 @@ static unsigned int read_cr2(void) {
     return address;
 }
 
-static void print_hex(unsigned int value) {
-    const char *digits = "0123456789ABCDEF";
-    int shift;
-
-    for (shift = 28; shift >= 0; shift -= 4) {
-        print_char(digits[(value >> shift) & 0x0F], 0x0F);
-    }
-}
 
 void paging_init(void) {
     unsigned int directory_index;
