@@ -55,7 +55,7 @@ relocated:
 dap:
     db 0x10
     db 0
-    dw 99                   ; sectors 1..99 (the RFS filesystem starts at LBA 100)
+    dw 127                   ; sectors 1..127 (the RFS filesystem starts at LBA 256 now)
     dw 0x1000
     dw 0x0000
     dd 1

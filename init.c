@@ -148,7 +148,8 @@ static void sh_help(const char *args) {
     "  df - show free disk space\n"
     "  ui demo|colors - show text-mode demos\n"
     "  gfx demo|ball - show pixel graphics demos\n"
-    "  pci read - reads pci address\n");
+    "  pci [read] - list PCI devices\n"
+    "  pci bar <bus> <device> <function> <index> - read a BAR register\n");
 }
 
 static void sh_echo(const char *args) {
@@ -189,9 +190,26 @@ static void print_pci_func(unsigned int bus, unsigned int dev, unsigned int fn) 
   print_char('\n');
 }
 
-static void sh_pci(const char *args) {
-  (void)args;
+static int pci_parse_uint(const char **text, unsigned int *value) {
+  const char *p = *text;
+  unsigned int n = 0;
+  int digits = 0;
 
+  while (*p == ' ') p++;
+  while (is_digit(*p)) {
+    unsigned int digit = (unsigned int)(*p - '0');
+    if (n > (0xFFFFFFFFu - digit) / 10u) return -1;
+    n = n * 10u + digit;
+    digits++;
+    p++;
+  }
+  if (digits == 0 || (*p != '\0' && *p != ' ')) return -1;
+  *value = n;
+  *text = p;
+  return 0;
+}
+
+static void pci_list_devices(void) {
   for (unsigned int bus = 0; bus < 256; bus++) {
     for (unsigned int dev = 0; dev < 32; dev++) {
       if ((pci_read32(bus, dev, 0, 0x00) & 0xFFFF) == 0xFFFF) continue;
@@ -207,6 +225,35 @@ static void sh_pci(const char *args) {
       }
     }
   }
+}
+
+static void sh_pci(const char *args) {
+  unsigned int bus, dev, fn, bar;
+
+  if (str_eq(args, "") || str_eq(args, "read")) {
+    pci_list_devices();
+    return;
+  }
+  if (!starts_with(args, "bar ")) {
+    print_string("Usage: pci [read] | pci bar <bus> <device> <function> <index>\n");
+    return;
+  }
+
+  args += 4;
+  if (pci_parse_uint(&args, &bus) != 0 || pci_parse_uint(&args, &dev) != 0 ||
+      pci_parse_uint(&args, &fn) != 0 || pci_parse_uint(&args, &bar) != 0) {
+    print_string("Usage: pci bar <bus> <device> <function> <index>\n");
+    return;
+  }
+  while (*args == ' ') args++;
+  if (*args != '\0' || bus > 255 || dev > 31 || fn > 7 || bar > 5) {
+    print_string("Invalid PCI address or BAR index (index must be 0-5).\n");
+    return;
+  }
+
+  unsigned int value = pci_read32(bus, dev, fn, 0x10 + bar * 4);
+  print_string("BAR"); print_char((char)('0' + bar));
+  print_string(" value: 0x"); print_hex(value, 8); print_char('\n');
 }
 static void sh_sleep(const char *args) {
   if (str_eq(args, "help")) {

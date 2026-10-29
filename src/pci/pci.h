@@ -1,5 +1,5 @@
 #ifndef PCI_H
-#define PCH_H
+#define PCI_H
 // Defines PCI control variables
 #define PCI_CONFIG_ADRESS 0xCF8
 #define PCI_CONFIG_DATA 0xCFC
@@ -37,12 +37,15 @@ typedef struct {
     unsigned char function;
     unsigned char prog_if;
 } pci_device;
-
+typedef struct {
+    unsigned int bar;
+    unsigned int base;
+    unsigned int size;
+} pci_bar;
 
 
 unsigned int pci_read32(unsigned int bus, unsigned int device, unsigned int function, unsigned int offset);
-
-
-
+void pci_write32(unsigned int bus, unsigned int device, unsigned int function, unsigned int offset, unsigned int value);
+int pci_get_bar(unsigned int bus, unsigned int device, unsigned int function, unsigned int bar_index, pci_bar *out);
 
 #endif

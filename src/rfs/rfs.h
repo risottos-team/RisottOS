@@ -1,7 +1,7 @@
 #ifndef R_RFS_H
 #define R_RFS_H
 
-#define RFS_START_LBA   100        // where the filesystem begins on the disk
+#define RFS_START_LBA   256        // where the filesystem begins on the disk
 #define RFS_MAGIC       "RFS1"
 #define RFS_NAME_MAX    32         // 31 characters + terminator
 #define RFS_TABLE_SECTORS 16       // 16 * 8 = 128 entries (files + directories)
