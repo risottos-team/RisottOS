@@ -36,3 +36,9 @@ unsigned int inl(unsigned short port){
 void outl(unsigned short port, unsigned int value){
     __asm__ volatile ("outl %0, %1" : : "a"(value), "Nd"(port));
 }
+unsigned int mmio_read32(unsigned int address){
+    return *(volatile unsigned int *)address;
+}
+void mmio_write32(unsigned int address, unsigned int value){
+    *(volatile unsigned int *)address = value;
+}
