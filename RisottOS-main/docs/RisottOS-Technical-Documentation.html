@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>RisottOS Technical Documentation</title>
+<style>
+@page { size: A4; margin: 18mm 17mm 18mm 17mm; }
+body { font-family: "Liberation Sans", Arial, sans-serif; color: #243447; font-size: 10.5pt; line-height: 1.42; }
+h1, h2, h3 { color: #123b5d; margin-bottom: 7px; }
+h1 { font-size: 28pt; margin-top: 0; }
+h2 { font-size: 18pt; border-bottom: 2px solid #2c8c99; padding-bottom: 4px; margin-top: 22px; }
+h3 { font-size: 13pt; margin-top: 16px; }
+p { margin: 6px 0 9px; }
+ul, ol { margin-top: 5px; }
+li { margin-bottom: 3px; }
+.cover { page-break-after: always; box-sizing: border-box; height: 245mm; padding: 22mm 9mm 0; }
+.cover .rule { height: 6px; background: #2c8c99; width: 82mm; margin: 18px 0 25px; }
+.subtitle { color: #557084; font-size: 15pt; }
+.meta { margin-top: 32mm; color: #557084; }
+.badge { display: inline-block; color: white; background: #123b5d; padding: 5px 10px; margin: 3px 3px 3px 0; font-size: 9pt; }
+.callout { background: #eef7f7; border-left: 4px solid #2c8c99; padding: 9px 12px; margin: 12px 0; }
+.warning { background: #fff6e5; border-left-color: #e1a12b; }
+.critical { background: #fff0f0; border-left-color: #c94a4a; }
+table { border-collapse: collapse; width: 100%; margin: 10px 0 14px; font-size: 9pt; }
+th { background: #123b5d; color: white; text-align: left; }
+th, td { border: 1px solid #c8d4dc; padding: 6px 7px; vertical-align: top; }
+tr:nth-child(even) td { background: #f5f8fa; }
+code, pre { font-family: "Liberation Mono", monospace; }
+code { color: #0d5962; background: #edf3f5; padding: 1px 3px; }
+pre { background: #172a3a; color: #e9f1f5; padding: 10px 12px; font-size: 8.5pt; border-radius: 2px; white-space: pre-wrap; }
+.flow { text-align: center; margin: 13px 0; }
+.flow span { display: inline-block; background: #e8f3f4; border: 1px solid #2c8c99; color: #123b5d; padding: 7px 9px; margin: 3px; }
+.flow b { color: #2c8c99; }
+.small { color: #607889; font-size: 8.5pt; }
+.page { page-break-before: always; }
+.two td { width: 50%; }
+.footer-note { margin-top: 20px; color: #607889; font-size: 8.5pt; }
+</style>
+</head>
+<body>
+
+<section class="cover">
+  <div class="badge">TECHNICAL DOCUMENTATION</div>
+  <div class="rule"></div>
+  <h1>RisottOS</h1>
+  <p class="subtitle">A compact 32-bit x86 educational operating system</p>
+  <p>Architecture, boot process, protected mode, Ring 3 execution, drivers, storage, and current engineering status.</p>
+  <div class="meta">
+    <p><b>Repository:</b> risottos-team/RisottOs</p>
+    <p><b>Document version:</b> 1.0</p>
+    <p><b>Prepared:</b> 20 October 2026</p>
+    <p><b>Primary runtime:</b> BIOS + QEMU i386</p>
+  </div>
+  <div class="callout">
+    <b>Scope note.</b> This document describes the repository as it exists today. Some subsystems
+    are implemented as reusable kernel code but are not reached by the active boot path.
+  </div>
+</section>
+
+<h2>1. Executive overview</h2>
+<p>RisottOS is a freestanding, 32-bit x86 operating-system project intended for learning
+low-level boot, protected-mode execution, interrupt handling, device I/O, and the first
+steps toward user mode. It does not depend on an operating-system runtime or a standard C
+library once the kernel starts.</p>
+<div class="callout">
+  <b>What happens today:</b> the BIOS boot sector loads the kernel, the kernel initializes
+  the interrupt and timer infrastructure, prints its startup messages, creates a small
+  machine-code program at a fixed address, and transfers execution to Ring 3. The test
+  program invokes <code>int 0x80</code> once and then loops safely in user mode.
+</div>
+<table>
+<tr><th>Area</th><th>Current status</th></tr>
+<tr><td>Boot</td><td>BIOS boot sector, A20 enable attempt, EDD disk read, protected-mode entry.</td></tr>
+<tr><td>Kernel</td><td>Freestanding 32-bit C kernel with assembly entry and interrupt stubs.</td></tr>
+<tr><td>Protection</td><td>Flat GDT, IDT, TSS, Ring 3 transition, and a small syscall dispatcher.</td></tr>
+<tr><td>Devices</td><td>VGA text/Mode 13h graphics, PIT, PS/2 keyboard with Shift/Caps Lock, CMOS RTC, and ATA PIO.</td></tr>
+<tr><td>Storage</td><td>Experimental RFS filesystem and raw ATA sector operations.</td></tr>
+<tr><td>Current limitations</td><td>Paging currently provides a 16 MiB identity-mapped bootstrap space with a supervisor-only first 4 MiB. Process isolation, robust exception handling, and complete userspace are still pending.</td></tr>
+</table>
+
+<h2>2. System architecture</h2>
+<p>The system is intentionally small and layered around direct hardware access.</p>
+<div class="flow">
+  <span>BIOS</span><b>→</b><span>boot.asm</span><b>→</b><span>protected mode</span><b>→</b>
+  <span>kernel_entry.asm</span><b>→</b><span>kmain()</span><b>→</b><span>Ring 3 test app</span>
+</div>
+<table class="two">
+<tr><th>Layer</th><th>Repository locations</th></tr>
+<tr><td>Boot and CPU entry</td><td><code>src/boot.asm</code><br><code>src/kernel_entry.asm</code></td></tr>
+<tr><td>CPU architecture</td><td><code>src/arch/idt.c</code><br><code>src/arch/interrupts.asm</code><br><code>src/arch/pic.c</code></td></tr>
+<tr><td>Kernel orchestration</td><td><code>src/kernel.c</code></td></tr>
+<tr><td>Drivers</td><td><code>src/drivers/</code><br>VGA, graphics, keyboard, timer, RTC, ATA</td></tr>
+<tr><td>Core services</td><td><code>src/mem/</code>, <code>src/rfs/</code>, <code>src/arch/syscall.c</code></td></tr>
+<tr><td>Interactive shell</td><td><code>init.c</code><br>Runs as the Ring 3 userspace application loaded by <code>kmain()</code>.</td></tr>
+</table>
+
+<h2>3. Boot and kernel startup</h2>
+<ol>
+<li><b>BIOS load:</b> the BIOS places the boot sector at <code>0x7C00</code>.</li>
+<li><b>Relocation:</b> the boot code copies itself to <code>0x0600</code>, protecting the original
+    location while the kernel is loaded.</li>
+<li><b>A20 and disk:</b> it requests A20 enablement and uses BIOS EDD
+    <code>INT 13h, AH=42h</code> to read 99 sectors from LBA 1 into physical address
+    <code>0x1000</code>.</li>
+<li><b>Protected mode:</b> the bootloader loads an initial GDT, sets <code>CR0.PE</code>,
+    performs a far jump, installs data segments, and sets the kernel stack to
+    <code>0x90000</code>.</li>
+<li><b>Kernel entry:</b> <code>kernel_entry.asm</code> calls <code>kmain()</code>.</li>
+<li><b>Initialization:</b> the kernel configures the IDT, enables the page-fault gate,
+    builds a 16 MiB identity map, rebuilds the GDT and TSS, remaps the PIC, enables
+    interrupts, starts the PIT and ATA support, and initializes a 4 MiB heap.</li>
+<li><b>User-mode test:</b> the kernel writes test instructions to <code>0x500000</code> and
+    enters Ring 3 with <code>iretd</code>.</li>
+</ol>
+<pre>BIOS → relocate boot sector → load kernel at 0x1000 → protected mode
+     → _start → kmain → IDT/GDT/TSS/PIC/PIT/ATA → Ring 3 smoke test</pre>
+<div class="callout warning">
+  <b>Hard-coded loader limit:</b> the bootloader always reads 99 sectors and has no
+  kernel-size metadata or bounds validation. The current kernel fits, but growth can
+  silently make the image unsafe.
+</div>
+
+<h2>4. Memory map</h2>
+<table>
+<tr><th>Address / range</th><th>Purpose</th><th>Notes</th></tr>
+<tr><td><code>0x0600</code></td><td>Relocated bootloader</td><td>Also uses the nearby real-mode stack.</td></tr>
+<tr><td><code>0x1000</code></td><td>Kernel image</td><td>Flat binary loaded by the bootloader.</td></tr>
+<tr><td><code>0x800000</code></td><td>Ring 3 user stack</td><td>Kept separate from the kernel transition stack.</td></tr>
+<tr><td><code>0x90000</code></td><td>Ring 0 kernel stack</td><td><code>ESP0</code> used when entering the kernel from Ring 3.</td></tr>
+<tr><td><code>0xA0000</code></td><td>VGA graphics framebuffer</td><td>Used by Mode 13h graphics routines.</td></tr>
+<tr><td><code>0xB8000</code></td><td>VGA text memory</td><td>80×25 text output.</td></tr>
+<tr><td><code>0x100000–0x400000</code></td><td>Kernel heap</td><td>3 MiB supervisor-only first-fit allocator arena.</td></tr>
+<tr><td><code>0x500000</code></td><td>Ring 3 test application</td><td>Raw code and its test string are written here.</td></tr>
+<tr><td><code>0x600000–0x800000</code></td><td>Ring 3 user heap</td><td>2 MiB allocator arena returned by memory syscalls.</td></tr>
+</table>
+<p>The first paging layer builds four page tables covering the first 16 MiB with
+identity mappings and enables the CPU paging bit. The first 4 MiB is
+supervisor-only; the Ring 3 image, stack, and dedicated user heap are in the
+user-accessible range. A page-fault gate reports the faulting address and halts
+the system. Syscall allocations now come from the user heap, while the kernel
+heap remains supervisor-only.</p>
+
+<h2>5. GDT, IDT, PIC, and TSS</h2>
+<h3>Global Descriptor Table</h3>
+<p>The bootloader initially defines six selectors: null (<code>0x00</code>), kernel code
+(<code>0x08</code>), kernel data (<code>0x10</code>), user code (<code>0x18</code>), user data
+(<code>0x20</code>), and TSS (<code>0x28</code>). The kernel later rebuilds an equivalent
+flat GDT in <code>src/arch/idt.c</code>, including the runtime address of its TSS.</p>
+<h3>Interrupt Descriptor Table</h3>
+<table>
+<tr><th>Vector</th><th>Source</th><th>Handler</th></tr>
+<tr><td><code>0x20</code></td><td>PIT / IRQ0</td><td>Timer tick and EOI.</td></tr>
+<tr><td><code>0x21</code></td><td>Keyboard / IRQ1</td><td>Scancode buffering.</td></tr>
+<tr><td><code>0x2E</code></td><td>ATA / IRQ14</td><td>ATA completion status.</td></tr>
+<tr><td><code>0x80</code></td><td>Software syscall</td><td>Ring 3-callable gate, attributes <code>0xEE</code>.</td></tr>
+</table>
+<p>The PIC is remapped to vectors <code>0x20</code>–<code>0x2F</code>. The TSS supplies
+<code>SS0=0x10</code> and <code>ESP0=0x90000</code> when privilege transitions return to
+the kernel.</p>
+<div class="callout critical">
+  <b>Exception handling gap:</b> CPU exception gates are not installed. A divide error,
+  invalid opcode, general protection fault, or page fault can therefore escalate into a
+  triple fault and reset the virtual machine.
+</div>
+
+<h2>6. Ring 3 and syscall smoke test</h2>
+<p><code>create_test_user_app()</code> constructs a tiny program directly in memory:</p>
+<pre>mov eax, 1              ; syscall number: print string
+mov ebx, 0x00500064     ; pointer to message at app + 100
+int 0x80
+jmp $                   ; safe user-mode idle loop</pre>
+<p><code>enter_usermode()</code> loads user data selectors and builds the five-word
+<code>iretd</code> frame: user SS, user ESP, EFLAGS with IF set, user CS, and user EIP.
+The CPU then begins execution at CPL 3.</p>
+<table>
+<tr><th>Number</th><th>Operation</th><th>Arguments / result</th></tr>
+<tr><td>1</td><td>Print string</td><td><code>EBX</code> points to a NUL-terminated string.</td></tr>
+<tr><td>2</td><td>Read keyboard</td><td>Returns a queued ASCII character or blocks while polling the keyboard controller.</td></tr>
+<tr><td>3</td><td>Free memory</td><td><code>EBX=pointer</code>.</td></tr>
+<tr><td>4</td><td>Allocate memory</td><td><code>EBX=size</code>; pointer returned in <code>EAX</code>.</td></tr>
+</table>
+<p>The syscall handler saves registers, switches to kernel data segments, dispatches in C,
+restores state, and returns with <code>iretd</code>. The test application does not return
+to a scheduler or shell; it remains in its loop while timer interrupts continue to run.</p>
+
+<h2>7. Hardware and kernel subsystems</h2>
+<table>
+<tr><th>Subsystem</th><th>Implementation summary</th><th>Current boundary</th></tr>
+<tr><td>VGA text</td><td>80×25 output, cursor, scrolling, colors, screen utilities.</td><td>Direct memory and port I/O.</td></tr>
+<tr><td>VGA graphics</td><td>Mode 13h at 320×200 with 256-color palette, pixels, lines, shapes, and text.</td><td>Library code; not entered by the active boot path.</td></tr>
+<tr><td>Keyboard</td><td>Set-1 scancode map, IRQ-driven 128-byte circular buffer, polling helper, Shift, and Caps Lock.</td><td>Extended navigation keys and alternate layouts are not yet exposed to userspace.</td></tr>
+<tr><td>PIT</td><td>Configurable channel 0 frequency and tick-based sleep.</td><td>Uses busy waiting with <code>hlt</code>.</td></tr>
+<tr><td>RTC</td><td>Reads CMOS BCD hours, minutes, and seconds.</td><td>No time-setting or robust update-in-progress handling.</td></tr>
+<tr><td>ATA PIO</td><td>Primary-master sector read/write, IRQ completion, flush, and IDENTIFY capacity.</td><td>Assumes a standard ATA-compatible primary IDE device.</td></tr>
+<tr><td>Allocator</td><td>First-fit linked list, splitting, freeing, adjacent coalescing.</td><td>No alignment, validation, ownership, or concurrency protection.</td></tr>
+</table>
+
+<h2>8. RisottOS Filesystem (RFS)</h2>
+<p>RFS starts at absolute LBA 100 and stores fixed-size metadata on 512-byte sectors.</p>
+<table>
+<tr><th>Relative area</th><th>Contents</th></tr>
+<tr><td>0</td><td>512-byte superblock with magic <code>RFS1</code>, layout, and free-space data.</td></tr>
+<tr><td>1 onward</td><td>Allocation bitmap.</td></tr>
+<tr><td>After bitmap</td><td>16-sector table containing up to 128 file/directory entries.</td></tr>
+<tr><td>After table</td><td>Contiguous file data sectors.</td></tr>
+</table>
+<p>The implementation supports formatting, mounting, directory creation and deletion,
+file creation, replacement, reading, sizing, deletion, listing, and free-space reporting.
+Each entry is 64 bytes. The filesystem is non-reentrant, has no journaling, requires
+contiguous allocation, and is not mounted by the current <code>kmain()</code> path.</p>
+
+<h2>9. Shell and build system</h2>
+<h3>Shell</h3>
+<p><code>init.c</code> contains commands for screen clearing, echo, RTC access,
+sleep, ATA tests and raw sector access, graphics demos, memory operations, and RFS
+operations. It also protects low disk sectors from raw writes. The shell is currently
+unreachable because <code>kmain()</code> launches the Ring 3 smoke test instead of
+launching <code>/init.bin</code> through the Ring 3 syscall interface.</p>
+<h3>Build</h3>
+<pre>make          # assemble, compile, link, and create os.img
+make run      # boot os.img in qemu-system-i386
+make clean    # remove build/ and os.img</pre>
+<table>
+<tr><th>Tool</th><th>Role</th></tr>
+<tr><td><code>i686-elf-gcc</code></td><td>Freestanding 32-bit C compiler.</td></tr>
+<tr><td><code>i686-elf-ld</code></td><td>Links the flat kernel binary at <code>0x1000</code>.</td></tr>
+<tr><td><code>nasm</code></td><td>Builds the boot sector and ELF32 assembly objects.</td></tr>
+<tr><td><code>qemu-system-i386</code></td><td>Runs the raw 64 MiB disk image.</td></tr>
+</table>
+<p>The Makefile collects C sources, links the kernel with <code>--oformat binary</code>,
+concatenates boot sector and kernel, and pads the result to 64 MiB. The checked-in
+<code>config/linker.ld</code> is not used by this Makefile. The legacy
+<code>scripts/build_and_run.sh</code> references a CMake configuration that is not present,
+so the Makefile is the authoritative build path.</p>
+
+<h2>10. Known risks and next steps</h2>
+<ol>
+<li><b>Complete paging isolation:</b> create separate kernel and user mappings, guard
+    the stack, and validate user pointers before syscall access.</li>
+<li><b>Replace fixed addresses:</b> derive kernel size, stack placement, heap bounds, and
+    user image placement from a memory layout rather than hard-coded constants.</li>
+<li><b>Build a scheduler boundary:</b> define process state, user return policy, and a
+    controlled path back from the test application.</li>
+<li><b>Harden interrupts and drivers:</b> validate ATA controller state and make
+    interrupt-shared data access explicit. Keyboard IRQ acknowledgement now has one owner.</li>
+<li><b>Re-enable the shell intentionally:</b> mount or format RFS safely during startup
+    and choose whether the shell or Ring 3 demo is the primary boot target.</li>
+<li><b>Improve RFS durability:</b> add allocation strategy, metadata ordering, recovery,
+    and fragmentation handling.</li>
+</ol>
+<div class="callout">
+  <b>Engineering perspective:</b> RisottOS has crossed the important boundary from a
+  protected-mode kernel into a working privilege-level transition. The next milestone
+  is not more Ring 3 instructions; it is isolation, fault reporting, and a controlled
+  execution model around them.
+</div>
+
+<h2>Appendix A — Source map</h2>
+<table>
+<tr><th>Path</th><th>Responsibility</th></tr>
+<tr><td><code>src/boot.asm</code></td><td>BIOS boot sector, disk load, initial GDT, protected-mode entry.</td></tr>
+<tr><td><code>src/kernel_entry.asm</code></td><td>Assembly entry point calling <code>kmain</code>.</td></tr>
+<tr><td><code>src/kernel.c</code></td><td>Startup order, heap initialization, Ring 3 test image.</td></tr>
+<tr><td><code>src/arch/idt.c</code></td><td>IDT setup, GDT rebuild, TSS structure and descriptor.</td></tr>
+<tr><td><code>src/arch/interrupts.asm</code></td><td>IRQ wrappers, syscall wrapper, TSS load, <code>iretd</code> transition.</td></tr>
+<tr><td><code>src/arch/syscall.c</code></td><td>Syscall dispatcher for print, keyboard input, free, and allocate.</td></tr>
+<tr><td><code>init.c</code></td><td>Ring 3 interactive shell and command implementations.</td></tr>
+<tr><td><code>src/drivers/</code></td><td>VGA, graphics, keyboard, timer, RTC, and ATA drivers.</td></tr>
+<tr><td><code>src/mem/</code></td><td>Simple heap allocator.</td></tr>
+<tr><td><code>src/rfs/</code></td><td>RFS metadata, directories, files, and allocation.</td></tr>
+<tr><td><code>Makefile</code></td><td>Authoritative build, image creation, and QEMU run target.</td></tr>
+</table>
+<p class="footer-note">This document is descriptive documentation, not a security or production-readiness certification.</p>
+
+</body>
+</html>
