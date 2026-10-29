@@ -89,7 +89,6 @@ void kmain() {
   __asm__ volatile("sti");
 
   timer_init(100);
-  unsigned int mustafa = pci_read32(0, 0, 0, 0);
   ata_init();
 
   mem_init((void *)0x100000, 3 * 1024 * 1024);
