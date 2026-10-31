@@ -15,12 +15,31 @@ global enter_usermode
 global _enter_usermode
 global tss_init
 global _tss_init
+global division_error_interrupt_handler
+global _division_error_interrupt_handler
+global debug_error_interrupt_handler
+global _debug_error_interrupt_handler
+global non_maskable_error_interrupt_handler
+global _non_maskable_error_interrupt_handler
+global non_maskable_error_handler
+global breakpoint_error_interrupt_handler
+global _breakpoint_error_interrupt_handler
+global overflow_error_interrupt_handler
+global _overflow_error_interrupt_handler
+global bound_range_exceeded_error_interrupt_handler
+global _bound_range_exceeded_error_interrupt_handler
 
 extern ata_handler
 extern keyboard_handler
 extern timer_handler
 extern syscall_dispatcher
 extern page_fault_handler
+extern division_error_handler
+extern debug_error_handler
+extern non_maskable_error_handler
+extern breakpoint_error_handler
+extern overflow_error_handler
+extern bound_range_exceeded_error_handler
 
 ; Standard Interrupt Handlers
 interrupt_handler:
@@ -41,6 +60,50 @@ ata_interrupt_handler:
 _ata_interrupt_handler:
     pusha
     call ata_handler
+    popa
+    iretd
+
+; Exception Handlers
+
+division_error_interrupt_handler:
+_division_error_interrupt_handler:
+  pusha
+  call division_error_handler
+  popa
+  iretd ; There is no add, esp 4 bcs it has not error code.
+
+debug_error_interrupt_handler:
+_debug_error_interrupt_handler:
+  pusha
+  call debug_error_handler
+  popa
+  iretd
+
+non_maskable_error_interrupt_handler:
+_non_maskable_error_interrupt_handler:
+  pusha
+  call debug_error_handler
+  popa
+  iretd
+
+breakpoint_error_interrupt_handler:
+_breakpoint_error_interrupt_handler:
+  pusha
+  call breakpoint_error_handler
+  popa
+  iretd
+
+overflow_error_interrupt_handler:
+_overflow_error_interrupt_handler:
+  pusha
+  call overflow_error_handler
+  popa
+  iretd
+
+bound_range_error_interrupt_handler:
+_bound_range_error_interrupt_handler:
+    pusha
+    call bound_range_error_handler
     popa
     iretd
 
