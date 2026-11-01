@@ -7,8 +7,8 @@
 #include "drivers/vga.h"
 #include "mem/mem.h"
 #include "mem/paging.h"
-#include "rfs/rfs.h"
 #include "pci/pci.h"
+#include "rfs/rfs.h"
 // Size of the init.bin seed area on disk (LBA 200..). 20 sectors = 10 KB.
 // Must be >= the size of build/init.bin, or its tail (strings!) is cut off.
 #define INIT_SECTORS 20
@@ -43,8 +43,8 @@ static void format_check(void) {
 
   vga_draw_window(0, 0, 80, 25, " RisottOS FileSystem Setup ", edge, win);
   vga_puts_at(
-    1, 2, "Your Drive has not been formatted yet, Do you wish to format it?",
-    win);
+      1, 2, "Your Drive has not been formatted yet, Do you wish to format it?",
+      win);
   vga_puts_at(3, 23, "F-Format", edge);
   vga_puts_at(16, 23, "N-No", edge);
   chc_handler();
@@ -63,9 +63,10 @@ void load_and_run_app(const char *filename) {
   unsigned char *user_space_buffer = (unsigned char *)0x500000;
 
   int bytes_read =
-  rfs_read(filename, user_space_buffer, (unsigned int)file_size);
+      rfs_read(filename, user_space_buffer, (unsigned int)file_size);
   if (bytes_read < 0) {
-    print_string("v1.0 Exec Error: Failed to read application from RFS!\n", 0x0C);
+    print_string("v1.0 Exec Error: Failed to read application from RFS!\n",
+                 0x0C);
     return;
   }
 
@@ -89,7 +90,11 @@ void kmain() {
   __asm__ volatile("sti");
 
   timer_init(100);
-  
+
+  // volatile int a = 10;
+  // volatile int b = 0;
+  // volatile int c = a / b;
+
   ata_init();
 
   mem_init((void *)0x100000, 3 * 1024 * 1024);
@@ -118,9 +123,11 @@ void kmain() {
     }
   }
 
-  // If /init.bin does not exist in the RFS file table, register it from sector 100
+  // If /init.bin does not exist in the RFS file table, register it from sector
+  // 100
   if (rfs_size("/init.bin") < 0) {
-    print_string("v1.0 Setup: Registering /init.bin in RFS file table...\n", 0x0E);
+    print_string("v1.0 Setup: Registering /init.bin in RFS file table...\n",
+                 0x0E);
 
     unsigned short *temp_load_zone = (unsigned short *)0x400000;
     unsigned int init_sector;
@@ -137,14 +144,15 @@ void kmain() {
     }
 
     int rfs_status = init_read_failed
-      ? -1
-      : rfs_write("/init.bin", (const void *)0x400000, INIT_SECTORS * 512);
+                         ? -1
+                         : rfs_write("/init.bin", (const void *)0x400000,
+                                     INIT_SECTORS * 512);
     if (rfs_status < 0) {
       print_string("v1.0 Error: RFS deployment index write failed!\n", 0x0C);
       sleep_ticks(200);
     } else {
-      print_string("vf1.0 Setup: /init.bin successfully mounted and indexed!\n", 0x02);
-      
+      print_string("vf1.0 Setup: /init.bin successfully mounted and indexed!\n",
+                   0x02);
     }
     sleep_ticks(50);
   }

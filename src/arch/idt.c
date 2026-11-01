@@ -5,13 +5,40 @@ extern void interrupt_handler(void);
 extern void timer_interrupt_handler(void);
 extern void ata_interrupt_handler(void);
 extern void syscall_interrupt_handler(void);
+
 extern void division_error_interrupt_handler(void);
-extern void page_fault_interrupt_handler(void);
 extern void debug_error_interrupt_handler(void);
-extern void non_maskable_error_interrıpt_handler(void);
+extern void non_maskable_error_interrupt_handler(void);
 extern void breakpoint_error_interrupt_handler(void);
 extern void overflow_error_interrupt_handler(void);
-extern void bound_range_error_interrupt_handler(void);
+extern void bound_range_exceeded_error_interrupt_handler(void);
+extern void invalid_opcode_error_interrupt_handler(void);
+extern void device_not_available_error_interrupt_handler(void);
+extern void double_fault_error_interrupt_handler(void);
+extern void coprocessor_segment_overrun_error_interrupt_handler(void);
+extern void invalid_tss_error_interrupt_handler(void);
+extern void segment_not_present_error_interrupt_handler(void);
+extern void stack_segment_fault_error_interrupt_handler(void);
+extern void general_protection_fault_error_interrupt_handler(void);
+extern void page_fault_interrupt_handler(void);
+extern void floating_point_exception_error_interrupt_handler(void);
+extern void alignment_check_error_interrupt_handler(void);
+extern void machine_check_error_interrupt_handler(void);
+extern void simd_error_interrupt_handler(void);
+extern void virtualization_exception_error_interrupt_handler(void);
+extern void control_protection_exception_error_interrupt_handler(void);
+extern void hypervisor_injection_error_interrupt_handler(void);
+extern void vmm_comm_error_interrupt_handler(void);
+extern void security_exception_error_interrupt_handler(void);
+
+extern void reserved_exception_15(void);
+extern void reserved_exception_22(void);
+extern void reserved_exception_23(void);
+extern void reserved_exception_24(void);
+extern void reserved_exception_25(void);
+extern void reserved_exception_26(void);
+extern void reserved_exception_27(void);
+extern void reserved_exception_31(void);
 
 // ---------------------------------------------------------------------------
 // IDT Structures
@@ -100,13 +127,42 @@ void idt_init(void) {
   idt_set_gate(0x21, (unsigned int)interrupt_handler);
   idt_set_gate(0x20, (unsigned int)timer_interrupt_handler);
   idt_set_gate(0x2E, (unsigned int)ata_interrupt_handler);
-  idt_set_gate(0x0E, (unsigned int)page_fault_interrupt_handler);
+
+  // CPU Exceptions (0-14)
   idt_set_gate(0x00, (unsigned int)division_error_interrupt_handler);
   idt_set_gate(0x01, (unsigned int)debug_error_interrupt_handler);
-  idt_set_gate(0x02, (unsigned int)non_maskable_error_interrıpt_handler);
+  idt_set_gate(0x02, (unsigned int)non_maskable_error_interrupt_handler);
   idt_set_gate(0x03, (unsigned int)breakpoint_error_interrupt_handler);
   idt_set_gate(0x04, (unsigned int)overflow_error_interrupt_handler);
-  idt_set_gate(0x04, (unsigned int)bound_range_error_interrupt_handler);
+  idt_set_gate(0x05, (unsigned int)bound_range_exceeded_error_interrupt_handler);
+  idt_set_gate(0x06, (unsigned int)invalid_opcode_error_interrupt_handler);
+  idt_set_gate(0x07, (unsigned int)device_not_available_error_interrupt_handler);
+  idt_set_gate(0x08, (unsigned int)double_fault_error_interrupt_handler);
+  idt_set_gate(0x09, (unsigned int)coprocessor_segment_overrun_error_interrupt_handler);
+  idt_set_gate(0x0A, (unsigned int)invalid_tss_error_interrupt_handler);
+  idt_set_gate(0x0B, (unsigned int)segment_not_present_error_interrupt_handler);
+  idt_set_gate(0x0C, (unsigned int)stack_segment_fault_error_interrupt_handler);
+  idt_set_gate(0x0D, (unsigned int)general_protection_fault_error_interrupt_handler);
+  idt_set_gate(0x0E, (unsigned int)page_fault_interrupt_handler);
+  idt_set_gate(0x10, (unsigned int)floating_point_exception_error_interrupt_handler);
+  idt_set_gate(0x11, (unsigned int)alignment_check_error_interrupt_handler);
+  idt_set_gate(0x12, (unsigned int)machine_check_error_interrupt_handler);
+  idt_set_gate(0x13, (unsigned int)simd_error_interrupt_handler);
+  idt_set_gate(0x14, (unsigned int)virtualization_exception_error_interrupt_handler);
+  idt_set_gate(0x15, (unsigned int)control_protection_exception_error_interrupt_handler);
+  idt_set_gate(0x1C, (unsigned int)hypervisor_injection_error_interrupt_handler);
+  idt_set_gate(0x1D, (unsigned int)vmm_comm_error_interrupt_handler);
+  idt_set_gate(0x1E, (unsigned int)security_exception_error_interrupt_handler);
+
+  // Reserved Exceptions
+  idt_set_gate(0x0F, (unsigned int)reserved_exception_15);
+  idt_set_gate(0x16, (unsigned int)reserved_exception_22);
+  idt_set_gate(0x17, (unsigned int)reserved_exception_23);
+  idt_set_gate(0x18, (unsigned int)reserved_exception_24);
+  idt_set_gate(0x19, (unsigned int)reserved_exception_25);
+  idt_set_gate(0x1A, (unsigned int)reserved_exception_26);
+  idt_set_gate(0x1B, (unsigned int)reserved_exception_27);
+  idt_set_gate(0x1F, (unsigned int)reserved_exception_31);
 
   // Install the 0x80 Syscall Gate.
   // 0xEF = present, DPL 3, 32-bit TRAP gate. A trap gate leaves IF set, so
@@ -157,7 +213,7 @@ void c_tss_init(void) {
   // 0x28: Task State Segment (TSS Descriptor mapped precisely to risottos_tss
   // physical memory address)
   unsigned int tss_base = (unsigned int)&risottos_tss;
-  gdt_set_gate(5, tss_base, sizeof(TSS_Structure) - 1, 0x89, 0x40);
+  gdt_set_gate(5, tss_base, sizeof(TSS_Structure) - 1, 0x89, 0x00);
 
   // 3. Load this clean GDT into the CPU directly, completely overwriting the
   // old boot.asm GDT zone
