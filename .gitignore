@@ -2,3 +2,4 @@ build/*
 !build/.gitkeep
 scripts/git.sh
 *.img
+.idea/
