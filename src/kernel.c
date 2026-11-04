@@ -6,6 +6,7 @@
 #include "drivers/timer.h"
 #include "drivers/vga.h"
 #include "mem/mem.h"
+#include "serial/serial.h"
 #include "mem/paging.h"
 #include "pci/pci.h"
 #include "rfs/rfs.h"
@@ -85,7 +86,8 @@ void kmain() {
   paging_init();
   c_tss_init();
   tss_init();
-
+  serial_init();
+  serial_write_string("HSML");
   pic_remap();
   __asm__ volatile("sti");
 

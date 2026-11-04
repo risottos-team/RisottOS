@@ -30,6 +30,7 @@ C_SRC := $(wildcard \
     src/mem/*.c \
     src/pci/*.c \
     src/rfs/*.c \
+	src/serial/*.c \
 )
 
 C_OBJ := $(patsubst src/%.c,$(BUILD)/%.o,$(C_SRC))
