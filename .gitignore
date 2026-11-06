@@ -3,3 +3,4 @@ build/*
 scripts/git.sh
 *.img
 .idea/
+compile_commands.json
