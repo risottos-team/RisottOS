@@ -1,0 +1,7 @@
+-m32
+-ffreestanding
+-nostdinc
+-Isrc
+-Wall
+-Wextra
+1
