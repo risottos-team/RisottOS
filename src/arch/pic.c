@@ -22,8 +22,8 @@ void pic_remap (void) {
     // Configure interrupt masks: Unmask timer (IRQ0) and keyboard (IRQ1)
     // Keep the timer enabled, but let the userspace input syscall poll the
     // keyboard controller directly instead of racing IRQ1 with Ring 3 code.
-    outb(0x21, 0xFA);
-    outb(0xA1, 0xBF);
+    outb(0x21, 0xFC);
+    outb(0xA1, 0xFF);
 }
 
 // Send End-of-Interrupt (EOI) signal to acknowledge handled hardware interrupts

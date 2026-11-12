@@ -3,7 +3,7 @@ build/*
 scripts/git.sh
 *.img
 .idea/
-
+iso_root/
 # Local IDE files
 .openidea/
 compile_commands.json

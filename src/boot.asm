@@ -165,7 +165,7 @@ protected_mode_start:
     mov byte [0xB8780], 'P'      ; write near middle of screen instead of top-left
     mov byte [0xB8782], 'M'
 
-    jmp 0x1000                      ; placeholder, kernel jump comes here later
+    jmp 0x08:0x1000                      ; far jump to kernel in protected mode
 
 
 
