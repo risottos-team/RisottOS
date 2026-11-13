@@ -123,6 +123,8 @@ You will need:
 
 - `i686-elf-gcc`
 - `i686-elf-ld`
+- `x86_64-elf-gcc` for x86-64
+- `x86_64-elf-ld`
 - NASM
 - GNU Make
 - QEMU (`qemu-system-i386`)
