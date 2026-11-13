@@ -6,6 +6,7 @@
 #include "drivers/timer.h"
 #include "drivers/vga.h"
 #include "mem/mem.h"
+#include "serial/serial.h"
 #include "mem/paging.h"
 #include "pci/pci.h"
 #include "rfs/rfs.h"
@@ -80,12 +81,26 @@ void load_and_run_app(const char *filename) {
 
 // Kernel Entry Point
 void kmain() {
+  // Direct VGA output test at position 0
+  volatile unsigned char *video = (unsigned char *)0xB8000;
+  video[0] = 'V';
+  video[1] = 0x0F;
+  video[2] = 'G';
+  video[3] = 0x0F;
+  video[4] = 'A';
+  video[5] = 0x0F;
+  video[6] = ' ';
+  video[7] = 0x0F;
+
+  serial_write_string("KERNEL_START\n");
+
   clear_screen();
-  idt_init();
+  serial_write_string("clear_screen_done\n");
   paging_init();
   c_tss_init();
   tss_init();
-
+  serial_init();
+  serial_write_string("HSML");
   pic_remap();
   __asm__ volatile("sti");
 
