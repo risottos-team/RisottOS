@@ -97,21 +97,45 @@ RESERVED_EXCEPTION 31
 interrupt_handler:
 _interrupt_handler:
     pusha
+    push ds
+    push es
+    mov ax, 0x10
+    mov ds, ax
+    mov es, ax
+    cld
     call keyboard_handler
+    pop es
+    pop ds
     popa
     iretd
 
 timer_interrupt_handler:
 _timer_interrupt_handler:
     pusha
+    push ds
+    push es
+    mov ax, 0x10
+    mov ds, ax
+    mov es, ax
+    cld
     call timer_handler
+    pop es
+    pop ds
     popa
     iretd
 
 ata_interrupt_handler:
 _ata_interrupt_handler:
     pusha
+    push ds
+    push es
+    mov ax, 0x10
+    mov ds, ax
+    mov es, ax
+    cld
     call ata_handler
+    pop es
+    pop ds
     popa
     iretd
 

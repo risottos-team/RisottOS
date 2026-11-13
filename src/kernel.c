@@ -156,8 +156,8 @@ void kmain() {
         init_read_failed = 1;
         break;
       }
+      
     }
-
     int rfs_status = init_read_failed
                          ? -1
                          : rfs_write("/init.bin", (const void *)0x400000,
@@ -172,6 +172,8 @@ void kmain() {
     sleep_ticks(50);
   }
 
+  
+
   print_string("Preparing to launch RisottOS Real Userspace Shell...\n", 0x0F);
   sleep_ticks(50);
 
@@ -182,4 +184,5 @@ void kmain() {
   while (1) {
     halt_cpu();
   }
+  
 }
