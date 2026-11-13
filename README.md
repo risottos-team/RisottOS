@@ -1,7 +1,7 @@
 # RisottOS
 
 <p align="center">
-  <strong>A hobby operating system built from scratch for 32-bit x86 systems.</strong>
+  <strong>A hobby operating system built from scratch for 64-bit AMD64 systems.</strong>
 </p>
 
 <p align="center">
@@ -14,17 +14,19 @@
 
 ## About
 
-**RisottOS** is an educational hobby operating system developed from scratch for 32-bit x86 PCs.
+**RisottOS** is an educational hobby operating system developed from scratch for 64-bit systems as the project itself targets x86-64.
 
 The project is developed collaboratively by two developers. Our goal is to understand how operating systems work internally by implementing low-level components ourselves, from the boot process to kernel functionality and userspace.
 
-RisottOS currently boots through BIOS, enters 32-bit protected mode, and runs a freestanding C kernel in QEMU.
+RisottOS now boots through Limine in the latest update and enters 64-bit long mode, but the screen stays blank for now (under development).
+
+You can still use the old 32-bit version via `make run`
 
 This is an experimental project under active development. It is not intended for daily use.
 
 ## Current Status
 
-The following components have been implemented:
+The following components have been implemented in the **32-bit version** (`make run`):
 
 | Component | Status |
 |---|---|
@@ -48,9 +50,17 @@ The following components have been implemented:
 | Basic system calls (`int 0x80`) | Implemented |
 | Interactive userspace shell | Basic implementation |
 
+The **x86-64 version** (`make run-x86_64`) is still in progress:
+
+| Component | Status |
+|---|---|
+| Boot through Limine | Implemented |
+| 64-bit long mode | Implemented |
+| Graphics output | In progress |
+
 ### Current Userspace Implementation
 
-The kernel currently launches a Ring 3 shell after boot.
+The x64 kernel currently launches into a blank screen, but you can still access the old 32-bit one using `make run`.
 
 The userspace program reads keyboard characters through syscall 2 and echoes them to the screen.
 
@@ -92,7 +102,7 @@ The following roadmap describes our planned development direction. Features may 
 | Advanced virtual memory management | Planned |
 | Memory protection improvements | Planned |
 | Improved ATA driver | Planned |
-| RFS improvements | Planned |
+| RFS (our custom filesystem) improvements | Planned |
 | Virtual Filesystem (VFS) | Planned |
 | File and directory operations | Planned |
 | ELF executable loader | Planned |
@@ -119,12 +129,16 @@ You will need:
 
 A working 32-bit cross-compilation toolchain is recommended.
 
+For the x86-64 version you will also need an x86-64 compiler/toolchain, `xorriso`, Limine and `qemu-system-x86_64`.
+
 ### Clone the repository
 
 ```bash
-git clone https://github.com/risottos-team/risottos.git
+git clone --recursive https://github.com/risottos-team/risottos.git
 cd risottos
 ```
+
+Limine is included as a git submodule. If you cloned without `--recursive`, run `git submodule update --init` inside the repo.
 
 ### Build
 
@@ -139,6 +153,12 @@ This generates `os.img` in the project root.
 ```bash
 make run
 ```
+### Run the x64 Version
+
+```bash
+make run-x86_64
+```
+
 
 ### Clean generated files
 
@@ -146,7 +166,9 @@ make run
 make clean
 ```
 
-### VirtualBox
+### VirtualBox (optional)
+
+This is completely optional, We recommend you to not touch it unless you need it, it's just there and it doesn't mean you have to touch it.
 
 The Makefile also contains an optional `vdi` target for converting the raw disk image into VirtualBox VDI format.
 
@@ -158,27 +180,35 @@ QEMU is the primary documented testing environment.
 
 ```text
 RisottOS/
+├── boot/                # boot folder that is needed for limine
 ├── config/              # Linker configuration
 ├── docs/                # Project documentation
-├── scripts/             # Development scripts
+├── iso_root/            # iso root for limine
+│   └── boot/
+│       └── limine
 ├── src/
+│   ├── arch/            # GDT, IDT, interrupts and syscalls
+│   │   └── x86_64/      # x86-64 (Limine) code
 │   ├── boot.asm         # BIOS bootloader
 │   ├── kernel.c         # Kernel initialization
 │   ├── kernel_entry.asm # Kernel entry point
-│   ├── arch/            # GDT, IDT, interrupts and syscalls
 │   ├── drivers/         # Hardware and graphics drivers
 │   ├── mem/             # Memory management and paging
 │   ├── pci/             # PCI-related code
 │   └── rfs/             # Filesystem implementation
 ├── init.c               # Userspace initialization program
 ├── Makefile
+├── CONTRIBUTING.md      # A simple guide on how to contribute to our project.
+├── compile_flags.txt    # A text file containing some flags about how compiler should behave.
 ├── LICENSE
 └── README.md
 ```
 
 ## Contributing
 
-We welcome suggestions, bug reports, code reviews, and contributions!
+We are open to suggestions, bug reports, code reviews, and contributions!
+
+Since we are a team of two, we do our best to improve this project as much as we can, and your feedback helps us a lot!
 
 If you are interested in operating system development, low-level programming, or kernel architecture, feel free to explore the project.
 
