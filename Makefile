@@ -72,6 +72,8 @@ X86_64_C_SRC := $(wildcard \
 )
 
 X86_64_OBJ := $(patsubst src/%.c,$(X86_64_BUILD)/%.o,$(X86_64_C_SRC))
+X86_64_ASM_SRC := $(wildcard src/arch/x86_64/*.asm)
+X86_64_ASM_OBJ := $(patsubst src/%.asm,$(X86_64_BUILD)/%.asm.o,$(X86_64_ASM_SRC))
 
 
 # ============================================================
@@ -133,9 +135,13 @@ $(X86_64_BUILD)/%.o: src/%.c
 >@mkdir -p $(dir $@)
 >$(X86_64_CC) $(X86_64_CFLAGS) -c $< -o $@
 
-$(X86_64_ELF): $(X86_64_OBJ) config/x86_64.ld
+$(X86_64_BUILD)/%.asm.o: src/%.asm
 >@mkdir -p $(dir $@)
->$(X86_64_LD) $(X86_64_LDFLAGS) $(X86_64_OBJ) -o $@
+>$(AS) -f elf64 $< -o $@
+
+$(X86_64_ELF): $(X86_64_OBJ) $(X86_64_ASM_OBJ) config/x86_64.ld
+>@mkdir -p $(dir $@)
+>$(X86_64_LD) $(X86_64_LDFLAGS) $(X86_64_OBJ) $(X86_64_ASM_OBJ) -o $@
 
 $(LIMINE_DIR)/limine:
 >$(MAKE) -C $(LIMINE_DIR)
