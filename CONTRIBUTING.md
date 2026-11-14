@@ -1,102 +1,44 @@
 # Contributing to RisottOS
 
-First of all, thank you for your interest in contributing to **RisottOS**!
+## First of All:
 
-RisottOS is an educational hobby operating system developed collaboratively by two developers. Our goal is to learn about operating system internals by building components from scratch.
+Thank you for the interest in making **RisottOS** better with us developers, as we would love to see our project get attention by other developers that are experienced enough, or even beginner ones as we aim to build RisottOS with every possible resource we got such as:
 
-We welcome contributions from developers, OSDev enthusiasts, students, and anyone interested in low-level programming.
+- OSDev Wiki
+- r/OSDev
+- And anyone who is willing to share their knowledge with us RisottOS community.
 
-You don't need to be an operating system expert to contribute!
+## Contributing
 
-## Ways to Contribute
+To contribute to RisottOS and make it a better OS than it is now, you have to have these installed:
 
-There are several ways you can help the project:
-
-- Report bugs and unexpected behavior.
-- Suggest new features and improvements.
-- Review existing kernel code.
-- Improve memory management.
-- Work on hardware drivers.
-- Help improve the bootloader.
-- Contribute to filesystem development.
-- Improve documentation.
-- Share architectural suggestions and technical feedback.
-
-Even small contributions are appreciated.
-
-## Before You Start
-
-Before making changes:
-
-1. Read the project's [README](README.md).
-2. Check existing [Issues](https://github.com/risottos-team/risottos/issues).
-3. Check existing Pull Requests to avoid duplicate work.
-4. For major changes, open an issue first to discuss your proposal with the maintainers.
-
-We recommend discussing significant architectural changes before implementing them.
-
-## Development Environment
-
-RisottOS currently targets **32-bit x86 (i386)**.
-
-The development environment uses:
-
-- C (freestanding)
-- x86 Assembly (NASM)
-- `i686-elf-gcc`
-- `i686-elf-ld`
+- QEMU
+- NASM
 - GNU Make
-- QEMU (`qemu-system-i386`)
+- `x86_64-elf-gcc`
+- `x86_64-elf-ld`
+- `i686-elf-gcc` for 32-bit
+- `i686-elf-ld`
 
-A working cross-compilation toolchain is recommended.
+## Things you should be aware of/Guidelines:
+Be respectful to other developers, as they can also be fellow devs trying to learn low-level systems and just don't know where to start.
 
-### Building the Project
 
-Clone your fork:
-
-```bash
-git clone https://github.com/YOUR_USERNAME/risottos.git
-cd risottos
-```
-
-Build the project:
-
-```bash
-make
-```
-
-Run it using QEMU:
-
-```bash
-make run
-```
-
-Clean generated files:
-
-```bash
-make clean
-```
-
-Before submitting a Pull Request, make sure the project builds successfully and test your changes whenever possible.
-
-## Code Guidelines
-
-To keep the codebase maintainable:
-
+- Report any bugs, issues you encounter, or even optimization ideas, we will try to fix it as soon as we find free time to fix.
 - Write readable and understandable code.
 - Use meaningful variable and function names.
 - Follow the existing project structure.
 - Keep kernel code freestanding.
 - Avoid unnecessary external dependencies.
+- We recommend using less AI on code as we try to keep it clean. Use it when you are truly struggling and have no absolute choice.
 - Document complex or architecture-specific implementations.
 - Be careful when modifying interrupt handlers, paging, and memory management.
 - Avoid unrelated changes in your Pull Request.
 
-When working with low-level code, explain important assumptions and hardware-specific behavior in comments.
+## How to Contribute:
+Check [Issues](https://github.com/risottos-team/RisottOS/issues) to find problems to be fixed. Most of the time we are working on issues but with only two devs to work on, it becomes impossible to maintain all at once.
 
-## Branching and Commit Messages
-
-Create a separate branch for each contribution.
+Create a branch for each contribution you will make/have made as it keeps project clean.
 
 Example:
 
@@ -104,16 +46,7 @@ Example:
 git checkout -b feature/process-management
 ```
 
-Use descriptive commit messages.
-
-Examples:
-
-```text
-feat: add process management
-fix: correct page fault handling
-docs: improve memory management documentation
-refactor: reorganize interrupt handlers
-```
+Try to be as clean as possible when committing, explain what your addition does so it's easier for other developers/maintainers to understand.
 
 ## Pull Request Process
 
@@ -165,40 +98,6 @@ When suggesting a feature, please describe:
 
 Major features may require discussion before implementation.
 
-## Discussions and Feedback
+## Lastly
 
-You are welcome to share:
-
-- Kernel architecture suggestions.
-- Memory management ideas.
-- Driver implementation approaches.
-- OSDev resources and references.
-- Performance and reliability improvements.
-
-Constructive criticism is always welcome. We are still learning and improving the project.
-
-## Code of Conduct
-
-Please be respectful and constructive when interacting with maintainers and other contributors.
-
-- Be welcoming to developers of all experience levels.
-- Focus on technical discussion.
-- Respect different approaches and opinions.
-- Provide constructive feedback.
-- Avoid personal attacks or disrespectful behavior.
-
-## Important Notes
-
-RisottOS is an experimental educational project.
-
-It is not intended for production use, and its architecture may change significantly during development.
-
-Submitting a contribution does not guarantee that it will be merged. Contributions are reviewed based on their relevance, correctness, maintainability, and compatibility with the project's direction.
-
-## Thank You!
-
-Every contribution helps RisottOS improve.
-
-Whether you report a bug, suggest an idea, review code, improve documentation, or implement a new feature, we appreciate your interest in the project.
-
-**Thank you for helping us build RisottOS!**
+In the way of learning how low-level systems work, how modern OSes handle different things, and bunch of different how's , Good Luck! We wish you best in this way and hope that you will soon or late understand how any of those work!
