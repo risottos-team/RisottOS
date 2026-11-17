@@ -1,3 +1,4 @@
+
 bits 64
 section .text
 
@@ -37,95 +38,82 @@ section .text
     pop rax
 %endmacro
 
-global isr0
-global isr1
-global isr2
-global isr3
-global isr4
-global isr5
-global isr6
-global isr7
-global isr8
-global isr9
-global isr10
-global isr11
-global isr12
-global isr13
+%assign i 0
+%rep 32
+    global isr %+ i
+    %assign i i + 1
+%endrep
 
 extern exception_error_handler
 
-isr0:
-    push 0 ; Fake error code
-    push 0 ; Exception num 0
+; Exceptions without CPU error code
+%macro ISR_NO_ERROR 1
+isr%1:
+    push 0
+    push %1
     jmp isr_common
+%endmacro
 
-isr1:
-    push 0 ; Fake error code
-    push 1 ; Exception num 1
+; Exceptions with CPU error code
+%macro ISR_ERROR 1
+isr%1:
+    push %1
     jmp isr_common
+%endmacro
 
-isr2:
-    push 0 ; Fake error code
-    push 2 ; Exception num 2
-    jmp isr_common
+ISR_NO_ERROR 0
+ISR_NO_ERROR 1
+ISR_NO_ERROR 2
+ISR_NO_ERROR 3
+ISR_NO_ERROR 4
+ISR_NO_ERROR 5
+ISR_NO_ERROR 6
+ISR_NO_ERROR 7
 
-isr3:
-    push 0 ; Fake error code
-    push 3 ; Exception num 3
-    jmp isr_common
+ISR_ERROR 8
 
-isr4:
-    push 0 ; Fake error code
-    push 4 ; Exception num 4
-    jmp isr_common
+ISR_NO_ERROR 9
 
-isr5:
-    push 0 ; Fake error code
-    push 5 ; Exception num 5
-    jmp isr_common
+ISR_ERROR 10
+ISR_ERROR 11
+ISR_ERROR 12
+ISR_ERROR 13
+ISR_ERROR 14
 
-isr6:
-    push 0 ; Fake error code
-    push 6 ; Exception num 6
-    jmp isr_common
+ISR_NO_ERROR 15
+ISR_NO_ERROR 16
 
-isr7:
-    push 0 ; Fake error code
-    push 7 ; Exception num 7
-    jmp isr_common
+ISR_ERROR 17
 
-isr8:
-    push 8 ; Exception num 8
-    jmp isr_common
+ISR_NO_ERROR 18
+ISR_NO_ERROR 19
+ISR_NO_ERROR 20
 
-isr9:
-    push 0 ; Fake error code
-    push 9 ; Exception num 9
-    jmp isr_common
+ISR_ERROR 21
 
-isr10:
-    push 10 ; Exception num 10
-    jmp isr_common
+ISR_NO_ERROR 22
+ISR_NO_ERROR 23
+ISR_NO_ERROR 24
+ISR_NO_ERROR 25
+ISR_NO_ERROR 26
+ISR_NO_ERROR 27
+ISR_NO_ERROR 28
 
-isr11:
-    push 11 ; Exception num 11
-    jmp isr_common
+ISR_ERROR 29
+ISR_ERROR 30
 
-isr12:
-    push 12 ; Exception num 12
-    jmp isr_common
-
-isr13:
-    push 13 ; Exception num 13
-    jmp isr_common
+ISR_NO_ERROR 31
 
 isr_common:
     PUSH_REGS
+
     mov r12, rsp
 
-    ; Pass exception arguments to the C handler
-    mov rdi, [r12 + 120]    ; Exception vector
-    mov rsi, [r12 + 128]    ; Error code
+    ; Exception vector
+    mov rdi, [r12 + 120]
+
+    ; Error code
+    mov rsi, [r12 + 128]
 
     cld
     and rsp, -16
@@ -133,7 +121,8 @@ isr_common:
     call exception_error_handler
 
     mov rsp, r12
-    POP_REGS
-    add rsp, 16
 
+    POP_REGS
+
+    add rsp, 16
     iretq
