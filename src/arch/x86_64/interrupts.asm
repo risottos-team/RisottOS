@@ -52,6 +52,8 @@ global isr11
 global isr12
 global isr13
 
+extern exception_error_handler
+
 isr0:
     push 0 ; Fake error code
     push 0 ; Exception num 0
@@ -93,7 +95,6 @@ isr7:
     jmp isr_common
 
 isr8:
-    push 0 ; Fake error code
     push 8 ; Exception num 8
     jmp isr_common
 
@@ -103,22 +104,18 @@ isr9:
     jmp isr_common
 
 isr10:
-    push 0 ; Fake error code
     push 10 ; Exception num 10
     jmp isr_common
 
 isr11:
-    push 0 ; Fake error code
     push 11 ; Exception num 11
     jmp isr_common
 
 isr12:
-    push 0 ; Fake error code
     push 12 ; Exception num 12
     jmp isr_common
 
 isr13:
-    push 0 ; Fake error code
     push 13 ; Exception num 13
     jmp isr_common
 
