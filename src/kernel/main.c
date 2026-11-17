@@ -1,6 +1,7 @@
 #include <limine.h>
 #include <stdint.h>
 #include <stddef.h>
+#include "../arch/x86_64/gdt.h"
 
 #include "../drivers/framebuffer/framebuffer.h"
 
@@ -16,10 +17,11 @@ static volatile struct limine_framebuffer_request framebuffer_request = {
 LIMINE_REQUESTS_END_MARKER
 
 void kernel_main(void) {
-  if (framebuffer_request.response == NULL ||
-      framebuffer_request.response->framebuffer_count == 0) {
+    gdt_init();
+    if (framebuffer_request.response == NULL ||
+        framebuffer_request.response->framebuffer_count == 0) {
     for (;;) {
-      __asm__ volatile("hlt");
+        __asm__ volatile("hlt");
     }
   }
 
