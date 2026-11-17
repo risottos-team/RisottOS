@@ -1,7 +1,7 @@
 # RisottOS
 
 <p align="center">
-  <strong>A hobby operating system built from scratch for 32-bit x86 systems.</strong>
+  <strong>A hobby operating system built from scratch for x86-64 systems.</strong>
 </p>
 
 <p align="center">
@@ -11,180 +11,60 @@
 </p>
 
 ---
+## About RisottOS
+RisottOS is a hobby OS project from scratch that aims to make its developers learn about x86-64 architecture, as well as low-level systems, how modern Operating Systems work etc. If you want to be a part of this project, check out [Contributing](#Contributing).
 
-## About
+## Get Started
+To boot RisottOS, you have 2 options:
+- 64-bit version(in Development)
+- 32-bit version
 
-**RisottOS** is an educational hobby operating system developed from scratch for 32-bit x86 PCs.
+The 64-bit version uses Limine to boot from, but after boot its just a blank screen.
 
-The project is developed collaboratively by two developers. Our goal is to understand how operating systems work internally by implementing low-level components ourselves, from the boot process to kernel functionality and userspace.
+The 32-bit version, however, boots from BIOS and is booting from .img file instead and is the functionable version of RisottOS.
 
-RisottOS currently boots through BIOS, enters 32-bit protected mode, and runs a freestanding C kernel in QEMU.
+## Installation
 
-This is an experimental project under active development. It is not intended for daily use.
+To clone the repository:
+`git clone https://github.com/risottos-team/RisottOS`
 
-## Current Status
+Submodules:
+`git submodule update --init --recursive --depth 1`
 
-The following components have been implemented:
-
-| Component | Status |
-|---|---|
-| Custom BIOS bootloader | Implemented |
-| BIOS disk loading (INT 13h) | Implemented |
-| 32-bit Protected Mode | Implemented |
-| Global Descriptor Table (GDT) | Implemented |
-| Interrupt Descriptor Table (IDT) | Implemented |
-| Programmable Interrupt Controller (PIC) | Implemented |
-| Task State Segment (TSS) | Implemented |
-| VGA text output | Implemented |
-| PIT timer | Implemented |
-| PS/2 keyboard input | Implemented |
-| Shift and Caps Lock support | Implemented |
-| Real-Time Clock (RTC) | Implemented |
-| ATA PIO support | Implemented |
-| Basic memory manager | Implemented |
-| Identity-mapped paging | Implemented |
-| Page-fault reporting | Implemented |
-| Ring 3 transition | Implemented |
-| Basic system calls (`int 0x80`) | Implemented |
-| Interactive userspace shell | Basic implementation |
-
-### Current Userspace Implementation
-
-The kernel currently launches a Ring 3 shell after boot.
-
-The userspace program reads keyboard characters through syscall 2 and echoes them to the screen.
-
-The current paging implementation provides a 16 MiB identity-mapped bootstrap address space:
-
-- The first 4 MiB is supervisor-only.
-- The Ring 3 program, its stack, and its dedicated user heap occupy user-accessible mappings.
-
-**Current limitations:**
-
-- Full process isolation is not implemented.
-- A standard C library is not available.
-- A complete userspace environment does not exist yet.
-- The current memory layout is a bootstrap implementation, not a complete virtual memory system.
-
-We are actively working to improve these areas.
-
-## Roadmap
-
-The following roadmap describes our planned development direction. Features may be adjusted as the project evolves.
-
-| Feature | Status |
-|---|---|
-| BIOS bootloader | Completed |
-| Protected mode | Completed |
-| GDT and IDT | Completed |
-| Hardware interrupt handling | Completed |
-| Basic memory management | Completed |
-| Paging initialization | Completed |
-| Ring 3 transition | Completed |
-| Basic syscall interface | Completed |
-| Process Control Blocks (PCB) | Planned |
-| Process creation and termination | Planned |
-| Per-process address spaces | Planned |
-| Context switching | Planned |
-| Basic multitasking | Planned |
-| Improved physical memory allocator | Planned |
-| Dynamic kernel heap | Planned |
-| Advanced virtual memory management | Planned |
-| Memory protection improvements | Planned |
-| Improved ATA driver | Planned |
-| RFS improvements | Planned |
-| Virtual Filesystem (VFS) | Planned |
-| File and directory operations | Planned |
-| ELF executable loader | Planned |
-| Expanded syscall interface | Planned |
-| Basic C library | Planned |
-| Independent userspace programs | Planned |
-| PCI device discovery | Planned |
-| Improved hardware drivers | Planned |
-| Graphics subsystem improvements | Planned |
-
-For individual tasks and ongoing development, check our [GitHub Issues](https://github.com/risottos-team/risottos/issues).
-
-## Building and Running
-
-### Requirements
-
-You will need:
-
-- `i686-elf-gcc`
-- `i686-elf-ld`
+## Tools Needed
+In General:
 - NASM
-- GNU Make
-- QEMU (`qemu-system-i386`)
+- QEMU
+- GNU MAKE
 
-A working 32-bit cross-compilation toolchain is recommended.
 
-### Clone the repository
+For x86:
+- `i686-elf-gcc` - Compiler
+- `i686-elf-ld` - Linker
 
-```bash
-git clone https://github.com/risottos-team/risottos.git
-cd risottos
-```
+For x86-64:
+- `x86_64-elf-gcc` - Compiler for x86-64 code
+- `x86_64-elf-ld` - Linker
 
-### Build
+> [!NOTE]
+> Windows users may need to install these compilers through MSYS2 or a similar environment, since they aren't native to Windows and have to be downloaded from separate build platforms.
 
-```bash
-make
-```
+After you download the repository, you can compile it with either:
 
-This generates `os.img` in the project root.
+- `make run-x86_64` - Compiles 64-bit version
+- `make run` - Compiles 32-bit version
 
-### Run with QEMU
-
-```bash
-make run
-```
-
-### Clean generated files
-
-```bash
-make clean
-```
-
-### VirtualBox
-
-The Makefile also contains an optional `vdi` target for converting the raw disk image into VirtualBox VDI format.
-
-The current VirtualBox conversion configuration uses Windows-specific paths and may need adjustments depending on your environment.
-
-QEMU is the primary documented testing environment.
-
-## Project Structure
-
-```text
-RisottOS/
-├── config/              # Linker configuration
-├── docs/                # Project documentation
-├── scripts/             # Development scripts
-├── src/
-│   ├── boot.asm         # BIOS bootloader
-│   ├── kernel.c         # Kernel initialization
-│   ├── kernel_entry.asm # Kernel entry point
-│   ├── arch/            # GDT, IDT, interrupts and syscalls
-│   ├── drivers/         # Hardware and graphics drivers
-│   ├── mem/             # Memory management and paging
-│   ├── pci/             # PCI-related code
-│   └── rfs/             # Filesystem implementation
-├── init.c               # Userspace initialization program
-├── Makefile
-├── LICENSE
-└── README.md
-```
+After that, QEMU window should pop up with RisottOS running.
 
 ## Contributing
 
-We welcome suggestions, bug reports, code reviews, and contributions!
-
-If you are interested in operating system development, low-level programming, or kernel architecture, feel free to explore the project.
+RisottOS is developed by two people, which makes its development very slow. We, as the RisottOS team, would love your additions to our hobby OS as well as it helps this project grow bigger.
 
 Before submitting code, please read [CONTRIBUTING.md](CONTRIBUTING.md).
 
-You can also open an issue to discuss a bug, suggest a feature, or ask a technical question.
+## As for the weird VirtualBox vdi maker line you would think about:
+
+It is optional but we recommend you that you just simply dont touch it unless you need .vdi of 32-bit version.
 
 ## Maintainers
 
@@ -199,6 +79,3 @@ RisottOS is licensed under the GNU General Public License v3.0.
 
 See [LICENSE](LICENSE) for details.
 
----
-
-**RisottOS is a learning project. We build it to understand what's happening beneath the software we use every day.**
