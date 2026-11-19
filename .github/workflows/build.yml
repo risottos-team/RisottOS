@@ -38,13 +38,14 @@ jobs:
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         id: version
         run: |
-          LATEST_TAG=$(git tag -l "v0.1.*" --sort=-v:refname | head -n 1)
+          LATEST_TAG=$(git tag -l "v*.*.*" --sort=-v:refname | head -n 1)
           if [ -z "$LATEST_TAG" ]; then
             NEXT_TAG="v0.1.1"
           else
+            BASE=${LATEST_TAG%.*}
             PATCH=${LATEST_TAG##*.}
             NEXT_PATCH=$((PATCH + 1))
-            NEXT_TAG="v0.1.$NEXT_PATCH"
+            NEXT_TAG="$BASE.$NEXT_PATCH"
           fi
           echo "tag=$NEXT_TAG" >> $GITHUB_OUTPUT
 
