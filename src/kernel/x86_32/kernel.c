@@ -1,15 +1,15 @@
-#include "arch/idt.h"
-#include "arch/io.h"
-#include "arch/pic.h"
-#include "drivers/ata.h"
-#include "drivers/keyboard.h"
-#include "drivers/timer.h"
-#include "drivers/vga.h"
-#include "mem/mem.h"
-#include "serial/serial.h"
-#include "mem/paging.h"
-#include "pci/pci.h"
-#include "rfs/rfs.h"
+#include "arch/x86_32/idt.h"
+#include "arch/x86_32/io.h"
+#include "arch/x86_32/pic.h"
+#include "drivers/x86_32/ata/ata.h"
+#include "drivers/x86_32/keyboard/keyboard.h"
+#include "drivers/x86_32/timer/timer.h"
+#include "drivers/x86_32/vga/vga.h"
+#include "mm/x86_32/mem.h"
+#include "drivers/x86_32/serial/serial.h"
+#include "mm/x86_32/paging.h"
+#include "drivers/x86_32/pci/pci.h"
+#include "fs/rfs/rfs.h"
 // Size of the init.bin seed area on disk (LBA 200..). 20 sectors = 10 KB.
 // Must be >= the size of build/init.bin, or its tail (strings!) is cut off.
 #define INIT_SECTORS 20
@@ -99,12 +99,15 @@ void kmain() {
   paging_init();
   c_tss_init();
   tss_init();
+  idt_init();
+  idt_init();
+  idt_init();
   serial_init();
   serial_write_string("HSML");
   pic_remap();
-  __asm__ volatile("sti");
 
   timer_init(100);
+  __asm__ volatile("sti");
 
   // volatile int a = 10;
   // volatile int b = 0;

@@ -1,5 +1,5 @@
 #include "serial.h"
-#include "../arch/io.h"
+#include "arch/x86_32/io.h"
 unsigned int PORT = COM1;
 
 int serial_init(void) {

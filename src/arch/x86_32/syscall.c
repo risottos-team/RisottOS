@@ -1,13 +1,13 @@
-#include "../drivers/vga.h"
-#include "../drivers/keyboard.h"
-#include "../drivers/timer.h"
-#include "../drivers/rtc.h"
-#include "../drivers/ata.h"
-#include "../mem/mem.h"
-#include "../rfs/rfs.h"
-#include "../mem/paging.h"
+#include "drivers/x86_32/vga/vga.h"
+#include "drivers/x86_32/keyboard/keyboard.h"
+#include "drivers/x86_32/timer/timer.h"
+#include "drivers/x86_32/rtc/rtc.h"
+#include "drivers/x86_32/ata/ata.h"
+#include "mm/x86_32/mem.h"
+#include "fs/rfs/rfs.h"
+#include "mm/x86_32/paging.h"
 #include "demos.h"
-#include "../pci/pci.h"
+#include "drivers/x86_32/pci/pci.h"
 
 // Pseudo error codes the Ring 3 shell can pass to syscall 27 for errors that
 // it detects itself (it does not know the RFS_E_* values).

@@ -1,5 +1,5 @@
 #include "keyboard.h"
-#include "../arch/io.h"
+#include "arch/x86_32/io.h"
 
 #define KEYBOARD_BUFFER_SIZE 128
 

@@ -1,5 +1,5 @@
 #include "rtc.h"
-#include "../arch/io.h"
+#include "arch/x86_32/io.h"
 
 unsigned char cmos_read(unsigned char address) {
     outb(0x70, address);

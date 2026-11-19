@@ -1,5 +1,5 @@
 #include "timer.h"
-#include "../arch/io.h"
+#include "arch/x86_32/io.h"
 
 // External tick counter updated by the timer interrupt handler
 extern volatile unsigned int tick_count;
