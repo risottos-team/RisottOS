@@ -1,5 +1,5 @@
 #include "pci.h"
-#include "../arch/io.h"
+#include "arch/x86_32/io.h"
 #define ENABLE_BIT 0x80000000u
 
 unsigned int pci_read32(unsigned int bus, unsigned int device, unsigned int function, unsigned int offset){

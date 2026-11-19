@@ -1,6 +1,6 @@
 #include "gfx.h"
-#include "../vga.h"
-#include "../../arch/io.h"
+#include "drivers/x86_32/vga/vga.h"
+#include "arch/x86_32/io.h"
 
 // Video memory window at 0xA0000. (Overridable so the code can be tested on a PC.)
 #ifndef GFX_FB

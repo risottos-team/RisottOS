@@ -1,6 +1,6 @@
 #include "rfs.h"
-#include "../drivers/ata.h"
-#include "../drivers/vga.h"
+#include "drivers/x86_32/ata/ata.h"
+#include "drivers/x86_32/vga/vga.h"
 
 // Stops GCC from turning our byte loops into calls to memcpy/memset,
 // which a freestanding kernel usually doesn't have.

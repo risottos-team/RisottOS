@@ -1,6 +1,6 @@
-#include "../drivers/ata.h"
-#include "../drivers/keyboard.h"
-#include "../drivers/vga.h"
+#include "drivers/x86_32/ata/ata.h"
+#include "drivers/x86_32/keyboard/keyboard.h"
+#include "drivers/x86_32/vga/vga.h"
 #include "pic.h"
 
 unsigned int tick_count = 0;

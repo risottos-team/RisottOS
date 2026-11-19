@@ -1,5 +1,5 @@
 #include "vga.h"
-#include "../arch/io.h"
+#include "arch/x86_32/io.h"
 
 // Text-mode video memory. (Overridable so the code can be tested on a PC.)
 #ifndef VGA_MEM

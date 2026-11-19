@@ -1,5 +1,5 @@
-#include "../arch/pic.h"
-#include "../arch/io.h"
+#include "arch/x86_32/pic.h"
+#include "arch/x86_32/io.h"
 #include "ata.h"
 static volatile int irq_status = 0;
 static volatile int irq_flag = 0;

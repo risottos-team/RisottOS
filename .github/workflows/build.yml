@@ -2,12 +2,40 @@ name: RisottOS Build
 
 on:
   push:
-    branches: [ "main", "feature/*" ]
+    branches:
+      - main
+      - "feature/**"
+      - "refactor/**"
+
   pull_request:
-    branches: [ "main" ]
+    branches:
+      - main
 
 jobs:
+  build-x86_32:
+    name: Build x86_32 BIOS
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential gcc-multilib nasm
+
+      - name: Build x86_32
+        run: make clean && make
+
+      - name: Upload BIOS disk image
+        uses: actions/upload-artifact@v4
+        with:
+          name: risottos-x86_32-bios
+          path: os.img
+
   build-x86_64:
+    name: Build x86_64 Limine
     runs-on: ubuntu-latest
 
     steps:
@@ -21,11 +49,11 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential nasm xorriso
 
-      - name: Build x86_64 ISO
+      - name: Build x86_64
         run: make x86_64
 
-      - name: Upload ISO artifact
+      - name: Upload Limine ISO
         uses: actions/upload-artifact@v4
         with:
-          name: risottos-x86_64-iso
+          name: risottos-x86_64-limine
           path: build/x86_64/risottos.iso

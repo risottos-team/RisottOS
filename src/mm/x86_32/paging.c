@@ -1,5 +1,5 @@
 #include "paging.h"
-#include "../drivers/vga.h"
+#include "drivers/x86_32/vga/vga.h"
 
 #define PAGE_PRESENT 0x001
 #define PAGE_WRITABLE 0x002

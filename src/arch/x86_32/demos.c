@@ -2,10 +2,10 @@
 // These need direct VGA / hardware access, so they stay in the kernel and the
 // Ring 3 shell starts them through syscalls 30-33.
 #include "demos.h"
-#include "../drivers/vga.h"
-#include "../drivers/gfx/gfx.h"
-#include "../drivers/keyboard.h"
-#include "../drivers/timer.h"
+#include "drivers/x86_32/vga/vga.h"
+#include "drivers/x86_32/gfx/gfx.h"
+#include "drivers/x86_32/keyboard/keyboard.h"
+#include "drivers/x86_32/timer/timer.h"
 #include "io.h"
 
 // Block until a key is pressed.

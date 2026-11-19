@@ -1,13 +1,13 @@
 #include "shell.h"
-#include "../drivers/vga.h"
-#include "../drivers/gfx/gfx.h"
-#include "../drivers/keyboard.h"
-#include "../drivers/rtc.h"
-#include "../drivers/ata.h"
+#include "drivers/x86_32/vga/vga.h"
+#include "drivers/x86_32/gfx/gfx.h"
+#include "drivers/x86_32/keyboard/keyboard.h"
+#include "drivers/x86_32/rtc/rtc.h"
+#include "drivers/x86_32/ata/ata.h"
 #include "io.h"
-#include "../drivers/timer.h"
-#include "../mem/mem.h"
-#include "../rfs/rfs.h"
+#include "drivers/x86_32/timer/timer.h"
+#include "mm/x86_32/mem.h"
+#include "fs/rfs/rfs.h"
 
 // Simple string equality (no libc)
 static int str_eq(const char *a, const char *b) {

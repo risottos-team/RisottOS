@@ -1,5 +1,5 @@
 #include "idt.h"
-#include "../drivers/vga.h"
+#include "drivers/x86_32/vga/vga.h"
 
 extern void interrupt_handler(void);
 extern void timer_interrupt_handler(void);

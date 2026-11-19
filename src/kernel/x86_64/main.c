@@ -1,9 +1,9 @@
 #include <limine.h>
 #include <stdint.h>
 #include <stddef.h>
-#include "../arch/x86_64/gdt.h"
+#include "arch/x86_64/gdt.h"
 
-#include "../drivers/framebuffer/framebuffer.h"
+#include "drivers/x86_64/framebuffer/framebuffer.h"
 
 LIMINE_BASE_REVISION(3);
 
